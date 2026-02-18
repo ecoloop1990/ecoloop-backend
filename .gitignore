@@ -40,3 +40,7 @@ coverage/
 # Docker
 .dockerignore
 
+#md files
+API_OBJECT_KEYS.md
+env.examples
+PROJECT_STRUCTURE.md
