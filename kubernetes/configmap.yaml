@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecoloop-config
+data:
+  ai-service-url: "http://ai-service:8000"
+  cors-origin: "https://ecoloop.com"
+  api-version: "v1"
+  rate-limit-window-ms: "900000"
+  rate-limit-max-requests: "100"
+

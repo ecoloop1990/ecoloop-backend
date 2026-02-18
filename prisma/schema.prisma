@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SELLER
+  BUYER
+}
+
+enum UserType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum MaterialType {
+  WOOD
+  METAL
+  PLASTIC
+  GLASS
+  CARDBOARD
+  ELECTRONICS
+  TEXTILES
+  OTHER
+}
+
+enum ListingStatus {
+  ACTIVE
+  PENDING
+  COMPLETED
+  SOLD
+  CANCELLED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(SELLER)
+  userType  UserType @default(INDIVIDUAL)
+  username  String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  listings      Listing[]
+  transactions  Transaction[] @relation("BuyerTransactions")
+  sellerTransactions Transaction[] @relation("SellerTransactions")
+
+  @@index([email])
+  @@index([role])
+}
+
+model Listing {
+  id          String        @id @default(uuid())
+  sellerId    String
+  title       String
+  description String?
+  materialType MaterialType
+  quantity    Float
+  unit        String        @default("kg")
+  price       Float
+  currency    String        @default("NGN")
+  imageUrl    String?
+  latitude    Float?
+  longitude   Float?
+  location    String?
+  status      ListingStatus @default(ACTIVE)
+  notes       String?
+  co2Saved    Float?
+  recyclability Float?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  seller       User          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  aiLogs       AI_Log[]
+
+  @@index([sellerId])
+  @@index([status])
+  @@index([materialType])
+  @@index([latitude, longitude])
+  @@index([createdAt])
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  listingId   String
+  buyerId     String
+  sellerId    String
+  status      TransactionStatus @default(PENDING)
+  co2Saved    Float?
+  price       Float
+  quantity    Float
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  listing     Listing           @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer       User              @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  seller      User              @relation("SellerTransactions", fields: [sellerId], references: [id])
+
+  @@index([listingId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+}
+
+model AI_Log {
+  id                String   @id @default(uuid())
+  listingId        String
+  predictedClass    String
+  confidenceScore   Float
+  override          Boolean  @default(false)
+  inferenceLatency  Int      // milliseconds
+  createdAt         DateTime @default(now())
+
+  // Relations
+  listing           Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([createdAt])
+}
+
