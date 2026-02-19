@@ -33,9 +33,6 @@ class TransactionService {
 
     // Create transaction
     const transaction = await transactionRepository.create({
-      listingId: data.listingId,
-      buyerId,
-      sellerId: listing.sellerId,
       status: TransactionStatus.PENDING,
       price: totalPrice,
       quantity: data.quantity,

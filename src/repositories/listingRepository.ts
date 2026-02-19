@@ -2,7 +2,6 @@ import prisma from '../config/database';
 import {
   Listing,
   ListingStatus,
-  MaterialType,
   Prisma,
 } from '@prisma/client';
 import { FeedQueryParams } from '../types';
@@ -51,7 +50,6 @@ class ListingRepository {
     const {
       latitude,
       longitude,
-      radius = 100,
       materialType,
       minPrice,
       maxPrice,

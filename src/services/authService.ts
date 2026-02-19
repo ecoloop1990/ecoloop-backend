@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { env } from '../config/env';
 import logger from '../config/logger';
 import userRepository from '../repositories/userRepository';
@@ -57,6 +57,7 @@ class AuthService {
     logger.info({ userId: user.id, email: user.email }, 'User registered successfully');
 
     // Return user without password
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
     return { user: userWithoutPassword, token };
   }
@@ -84,14 +85,20 @@ class AuthService {
     logger.info({ userId: user.id, email: user.email }, 'User logged in successfully');
 
     // Return user without password
+    
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
     return { user: userWithoutPassword, token };
   }
 
   generateToken(payload: JWTPayload): string {
-    return jwt.sign(payload, env.JWT_SECRET, {
-      expiresIn: env.JWT_EXPIRES_IN,
-    });
+    // Assert .env values are definitely strings
+    const secret = env.JWT_SECRET as string;
+    const expiresIn = env.JWT_EXPIRES_IN as SignOptions['expiresIn'];
+  
+    const options: SignOptions = { expiresIn };
+  
+    return jwt.sign(payload, secret, options);
   }
 
   verifyToken(token: string): JWTPayload {

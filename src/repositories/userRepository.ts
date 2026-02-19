@@ -30,6 +30,7 @@ class UserRepository {
         id: true,
         name: true,
         email: true,
+        password: true,
         role: true,
         userType: true,
         username: true,
