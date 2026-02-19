@@ -38,7 +38,7 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Request logging middleware
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   logger.info(
     {
       method: req.method,

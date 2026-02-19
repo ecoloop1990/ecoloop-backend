@@ -17,7 +17,7 @@ export const errorHandler = (
   err: Error | AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   if (err instanceof AppError) {
     logger.warn(
@@ -56,7 +56,7 @@ export const errorHandler = (
 export const notFoundHandler = (
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   res.status(404).json({
     error: 'Route not found',

@@ -3,6 +3,7 @@ import listingService from '../services/listingService';
 import { AppError } from '../middlewares/errorHandler';
 import logger from '../config/logger';
 import { FeedQueryParams } from '../types';
+import { MaterialType } from '../types';
 
 export const createListing = async (
   req: Request,
@@ -80,7 +81,7 @@ export const getFeed = async (
       radius: req.query.radius
         ? parseFloat(req.query.radius as string)
         : undefined,
-      materialType: req.query.materialType as any,
+      materialType: req.query.materialType as MaterialType,
       minPrice: req.query.minPrice
         ? parseFloat(req.query.minPrice as string)
         : undefined,
