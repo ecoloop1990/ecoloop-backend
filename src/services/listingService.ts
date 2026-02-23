@@ -1,111 +1,176 @@
-import { Listing, MaterialType, ListingStatus } from '@prisma/client';
+import { Listing, ListingStatus, MaterialType, Prisma } from '@prisma/client';
 import listingRepository from '../repositories/listingRepository';
-import aiService from '../integrations/aiService';
-// import aiLogRepository from '../repositories/aiLogRepository';
 import s3Service from '../integrations/s3';
 import { calculateRankingScores, sortByRankingScore } from '../utils/ranking';
 import { calculateDistance } from '../utils/haversine';
 import { CreateListingRequest, FeedQueryParams } from '../types';
 import logger from '../config/logger';
+import { AIService } from './aiService';
 
 class ListingService {
-  async createListing(
+  private readonly aiService = new AIService();
+
+  /**
+   * Manual listing creation flow.
+   * Frontend → Backend → DB
+   */
+  async createManualListing(
     sellerId: string,
     data: CreateListingRequest,
-    imageFile?: { buffer: Buffer; mimetype: string; originalname: string }
+    imageFile: Express.Multer.File
   ): Promise<Listing> {
-    let imageUrl = data.imageUrl;
-    let detectedItems: string[] = [];
-    let totalWeight: number | undefined;
-    let carbonFootprint: number | undefined;
-    let materialType = data.materialType;
-    let quantity = data.quantity;
-
-    // Handle AI-based creation
-    if (data.createType === 'ai') {
-      if (!imageFile) {
-        throw new Error('Image is required for AI-based listing creation');
-      }
-
-      // Validate image size (10MB max)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
-      if (imageFile.buffer.length > maxSize) {
-        throw new Error('Image size exceeds 10MB limit');
-      }
-
-      // Upload image to S3
-      const tempId = `temp-${Date.now()}`;
-      const s3Key = s3Service.generateListingImageKey(
-        tempId,
-        imageFile.originalname
-      );
-
-      imageUrl = await s3Service.uploadFile(
-        imageFile.buffer,
-        s3Key,
-        imageFile.mimetype
-      );
-
-      // Call AI service for analysis
-      try {
-        const aiAnalysis = await aiService.analyzeImage(imageFile.buffer);
-        
-        if (!aiAnalysis) {
-          throw new Error('AI service failed to analyze image');
-        }
-
-        detectedItems = aiAnalysis.detected_items || [];
-        totalWeight = aiAnalysis.total_weight;
-        carbonFootprint = aiAnalysis.total_carbon_footprint;
-        quantity = totalWeight || data.quantity || 0;
-
-        logger.info(
-          {
-            sellerId,
-            totalWeight,
-            carbonFootprint,
-            detectedItems,
-          },
-          'AI analysis completed successfully'
-        );
-      } catch (error) {
-        logger.error({ error }, 'AI service analysis failed');
-        throw new Error('Failed to analyze image with AI service. Please try again.');
-      }
-    } else {
-      // Manual creation
-      if (!data.weight || !data.material) {
-        throw new Error('Weight and material are required for manual listing creation');
-      }
-      totalWeight = data.weight;
-      quantity = data.weight;
-      materialType = data.materialType;
+    if (!data.materialType) {
+      throw new Error('materialType is required for manual listing creation');
     }
 
-    // Create listing
-    const listing = await listingRepository.create({
+    if (data.quantity === undefined || Number.isNaN(Number(data.quantity))) {
+      throw new Error('quantity is required for manual listing creation');
+    }
+
+    const quantity = Number(data.quantity);
+    if (quantity <= 0) {
+      throw new Error('quantity must be greater than 0');
+    }
+
+    if (!imageFile?.buffer) {
+      throw new Error('Image is required for manual listing creation');
+    }
+
+    // Upload image to S3
+    const tempId = `manual-${Date.now()}`;
+    const s3Key = s3Service.generateListingImageKey(tempId, imageFile.originalname);
+    const imageUrl = await s3Service.uploadFile(imageFile.buffer, s3Key, imageFile.mimetype);
+
+    return this.createBaseListing({
+      sellerId,
       title: data.title,
       description: data.description,
-      materialType: materialType as MaterialType,
-      quantity: quantity || 0,
-      unit: data.unit || 'kg',
+      materialType: data.materialType,
+      quantity,
+      unit: data.unit ?? 'kg',
       price: data.price,
-      currency: data.currency || 'NGN',
+      currency: data.currency ?? 'NGN',
       imageUrl,
-      latitude: data.latitude,
-      longitude: data.longitude,
       location: data.location,
       state: data.state,
       notes: data.notes,
       status: ListingStatus.ACTIVE,
-      createType: data.createType,
-      detectedItems,
-      totalWeight,
-      carbonFootprint,
-      seller: {
-        connect: { id: sellerId },
-      },
+      detectedItems: [],
+      totalWeight: quantity,
+      carbonFootprint: data.carbonFootprint,
     });
+  }
+
+  /**
+   * AI-powered listing creation flow.
+   * Frontend → Backend → AI Service → Backend → DB
+   */
+  async createAIListing(
+    sellerId: string,
+    data: CreateListingRequest,
+    imageFile: Express.Multer.File
+  ): Promise<Listing> {
+    if (!imageFile?.buffer) {
+      throw new Error('Image is required for AI listing creation');
+    }
+
+    // Validate image size (10MB max)
+    const maxSize = 10 * 1024 * 1024;
+    if (imageFile.buffer.length > maxSize) {
+      throw new Error('Image size exceeds 10MB limit');
+    }
+
+    // Upload image to S3
+    const tempId = `temp-${Date.now()}`;
+    const s3Key = s3Service.generateListingImageKey(tempId, imageFile.originalname);
+    const imageUrl = await s3Service.uploadFile(imageFile.buffer, s3Key, imageFile.mimetype);
+
+    // Analyze image via external AI service
+    const ai = await this.aiService.analyzeImage(imageFile.buffer);
+
+    const normalizedDetected = ai.detected_items
+      .map((i) => i.trim().toUpperCase())
+      .filter((i) => i.length > 0);
+
+    // Choose a valid materialType from detected items (enum safety)
+    const allowedMaterialTypes = new Set<string>(Object.values(MaterialType));
+    const firstDetectedMaterial = normalizedDetected.find((i) => allowedMaterialTypes.has(i));
+
+    if (!firstDetectedMaterial) {
+      throw new Error('AI did not detect a valid material type');
+    }
+
+    return this.createBaseListing({
+      sellerId,
+      title: data.title,
+      description: data.description,
+      materialType: firstDetectedMaterial as MaterialType,
+      quantity: normalizedDetected.length,
+      unit: data.unit ?? 'kg',
+      price: data.price,
+      currency: data.currency ?? 'NGN',
+      imageUrl,
+      location: data.location,
+      state: data.state,
+      notes: data.notes,
+      status: ListingStatus.ACTIVE,
+      detectedItems: normalizedDetected,
+      totalWeight: ai.total_weight,
+      carbonFootprint: ai.total_carbon_footprint,
+    });
+  }
+
+  /**
+   * Shared base creation method.
+   * MUST contain only Prisma listing creation logic. No AI logic here.
+   */
+  private async createBaseListing(params: {
+    sellerId: string;
+    title: string;
+    description?: string;
+    materialType: MaterialType;
+    quantity: number;
+    unit: string;
+    price: number;
+    currency: string;
+    imageUrl?: string;
+    latitude?: number;
+    longitude?: number;
+    location?: string;
+    state?: string;
+    notes?: string;
+    status: ListingStatus;
+    detectedItems: string[];
+    totalWeight: number;
+    carbonFootprint?: number;
+  }): Promise<Listing> {
+    const data: Prisma.ListingCreateInput = {
+      title: params.title,
+      description: params.description,
+      materialType: params.materialType,
+      quantity: params.quantity,
+      unit: params.unit,
+      price: params.price,
+      currency: params.currency,
+      imageUrl: params.imageUrl,
+      latitude: params.latitude,
+      longitude: params.longitude,
+      location: params.location,
+      state: params.state,
+      notes: params.notes,
+      status: params.status,
+      detectedItems: params.detectedItems,
+      totalWeight: params.totalWeight,
+      carbonFootprint: params.carbonFootprint,
+      seller: { connect: { id: params.sellerId } },
+    };
+
+    const listing = await listingRepository.create(data);
+
+    logger.info(
+      { listingId: listing.id, sellerId: params.sellerId },
+      'Listing created'
+    );
 
     return listing;
   }
@@ -183,91 +248,11 @@ class ListingService {
     return listingRepository.findBySellerId(sellerId);
   }
 
-  // Legacy method - kept for potential future use but currently unused
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // private async processAIInference(
-  //   listingId: string,
-  //   imageUrl: string,
-  //   userSelectedMaterialType: MaterialType
-  // ): Promise<void> {
-  //   const startTime = Date.now();
+  async getListings(state?: string): Promise<Listing[]> {
+    return listingRepository.findByState(state);
+  }
 
-  //   try {
-  //     const prediction = await aiService.predictMaterialClass(imageUrl);
-
-  //     if (!prediction) {
-  //       logger.warn({ listingId }, 'AI service returned no prediction');
-  //       return;
-  //     }
-
-  //     const latency = Date.now() - startTime;
-
-  //     // Map AI prediction to our MaterialType enum
-  //     const predictedMaterialType = this.mapAIClassToMaterialType(
-  //       prediction.predicted_class
-  //     );
-
-  //     // Check if user override is needed
-  //     const override =
-  //       predictedMaterialType !== userSelectedMaterialType &&
-  //       prediction.confidence < 0.7;
-
-  //     // Log AI inference
-  //     await aiLogRepository.create({
-  //       listingId,
-  //       predictedClass: prediction.predicted_class,
-  //       confidenceScore: prediction.confidence,
-  //       override,
-  //       inferenceLatency: latency,
-  //     });
-
-  //     // Update listing if AI suggests different material type and confidence is high
-  //     if (
-  //       !override &&
-  //       predictedMaterialType &&
-  //       predictedMaterialType !== userSelectedMaterialType
-  //     ) {
-  //       await listingRepository.update(listingId, {
-  //         materialType: predictedMaterialType,
-  //       });
-  //       logger.info(
-  //         { listingId, predictedType: predictedMaterialType },
-  //         'Listing material type updated based on AI prediction'
-  //       );
-  //     }
-  //   } catch (error) {
-  //     logger.error(
-  //       { error, listingId },
-  //       'Error processing AI inference'
-  //     );
-  //   }
-  // }
-
-  // private mapAIClassToMaterialType(aiClass: string): MaterialType | null {
-  //   const classLower = aiClass.toLowerCase();
-
-  //   if (classLower.includes('wood') || classLower.includes('timber')) {
-  //     return MaterialType.WOOD;
-  //   }
-  //   if (classLower.includes('metal') || classLower.includes('steel')) {
-  //     return MaterialType.METAL;
-  //   }
-  //   if (classLower.includes('plastic') || classLower.includes('polymer')) {
-  //     return MaterialType.PLASTIC;
-  //   }
-  //   if (classLower.includes('glass')) {
-  //     return MaterialType.GLASS;
-  //   }
-  //   if (classLower.includes('cardboard') || classLower.includes('paper')) {
-  //     return MaterialType.CARDBOARD;
-  //   }
-  //   if (classLower.includes('biodegradable'))  {
-  //     return MaterialType.BIODEGRADABLE;
-  //   }
-
-
-  //   return null;
-  // }
+  // No legacy AI helpers here by design.
 }
 
 export default new ListingService();

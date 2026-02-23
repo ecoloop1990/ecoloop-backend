@@ -67,6 +67,14 @@ app.get('/health', (_req, res) => {
 
 // Swagger documentation (only in development or if explicitly enabled)
 if (env.NODE_ENV === 'development' || process.env.ENABLE_SWAGGER === 'true') {
+  // Avoid stale Swagger UI/spec in browsers/proxies
+  app.use('/api/docs', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  });
+
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'EcoLoop API Documentation',

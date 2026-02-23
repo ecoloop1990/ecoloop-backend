@@ -5,7 +5,42 @@ import logger from '../config/logger';
 import { FeedQueryParams } from '../types';
 import { MaterialType } from '../types';
 
-export const createListing = async (
+export const createManualListing = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      next(new AppError('Unauthorized', 401));
+      return;
+    }
+    if (!req.file) {
+      next(new AppError('Image is required', 400));
+      return;
+    }
+
+    const listing = await listingService.createManualListing(
+      req.user.userId,
+      req.body,
+      req.file
+    );
+
+    res.status(201).json({
+      message: 'Listing created successfully',
+      listing,
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to create listing');
+    if (error instanceof Error) {
+      next(new AppError(error.message, 400));
+      return;
+    }
+    next(error);
+  }
+};
+
+export const createAIListing = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -16,42 +51,28 @@ export const createListing = async (
       return;
     }
 
-    // Validate createType
-    if (!req.body.createType || !['ai', 'manual'].includes(req.body.createType)) {
-      next(new AppError('createType must be either "ai" or "manual"', 400));
+    if (!req.file) {
+      next(new AppError('Image is required', 400));
       return;
     }
 
-    const imageFile = req.file
-      ? {
-          buffer: req.file.buffer,
-          mimetype: req.file.mimetype,
-          originalname: req.file.originalname,
-        }
-      : undefined;
-
     try {
-      const listing = await listingService.createListing(
-        req.user.userId,
-        req.body,
-        imageFile
-      );
+      const listing = await listingService.createAIListing(req.user.userId, req.body, req.file);
 
       res.status(201).json({
-        message: 'Listing created successfully',
+        message: 'AI listing created successfully',
         listing,
       });
-    } catch (error) {
-      // Check if it's an AI service error
-      if (error instanceof Error && error.message.includes('AI service')) {
-        logger.error({ error }, 'AI service error');
-        next(new AppError('AI service is currently unavailable. Please try again later.', 502));
+    } catch (err) {
+      // AI dependency failure → 502
+      if (err instanceof Error && err.message.toLowerCase().includes('ai')) {
+        next(new AppError('AI analysis failed. Please try again.', 502));
         return;
       }
-      throw error;
+      throw err;
     }
   } catch (error) {
-    logger.error({ error }, 'Failed to create listing');
+    logger.error({ error }, 'Failed to create AI listing');
     if (error instanceof Error) {
       next(new AppError(error.message, 400));
       return;
@@ -176,6 +197,26 @@ export const getMyListings = async (
     res.status(200).json({ listings, count: listings.length });
   } catch (error) {
     logger.error({ error }, 'Failed to get user listings');
+    next(error);
+  }
+};
+
+export const getListings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const state = req.query.state as string | undefined;
+
+    const listings = await listingService.getListings(state);
+
+    res.status(200).json({
+      listings,
+      count: listings.length,
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get listings');
     next(error);
   }
 };

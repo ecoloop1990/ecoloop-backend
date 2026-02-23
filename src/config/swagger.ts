@@ -53,7 +53,7 @@ const options: swaggerJsdoc.Options = {
         },
         RegisterRequest: {
           type: 'object',
-          required: ['name', 'email', 'password', 'confirmPassword', 'role', 'termsAccepted'],
+          required: ['name', 'email', 'password', 'confirmPassword', 'userType', 'termsAccepted'],
           properties: {
             name: {
               type: 'string',
@@ -76,10 +76,10 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               example: 'SecurePass123',
             },
-            role: {
+            userType: {
               type: 'string',
               enum: ['seller', 'buyer'],
-              description: 'User role (must be lowercase)',
+              description: 'User role (seller or buyer, case-insensitive)',
               example: 'seller',
             },
             username: {
@@ -133,7 +133,7 @@ const options: swaggerJsdoc.Options = {
                 role: {
                   type: 'string',
                   enum: ['seller', 'buyer'],
-                  example: 'seller',
+                  example: 'buyer',
                 },
                 username: {
                   type: 'string',
@@ -177,7 +177,7 @@ const options: swaggerJsdoc.Options = {
             },
             materialType: {
               type: 'string',
-              enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'ELECTRONICS', 'TEXTILES', 'OTHER'],
+              enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'BIODEGRADABLE'],
               description: 'Required for manual creation, optional for AI',
               example: 'PLASTIC',
             },
@@ -261,7 +261,7 @@ const options: swaggerJsdoc.Options = {
             },
             materialType: {
               type: 'string',
-              enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'ELECTRONICS', 'TEXTILES', 'OTHER'],
+              enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'BIODEGRADABLE'],
             },
             quantity: {
               type: 'number',
@@ -526,7 +526,8 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ['./src/routes/*.ts', './src/types/*.ts'],
+  // In dev we load annotations from TS. In production build, load from dist JS.
+  apis: ['./src/routes/*.ts', './dist/routes/*.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
