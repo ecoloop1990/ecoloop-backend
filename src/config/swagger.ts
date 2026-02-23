@@ -53,7 +53,7 @@ const options: swaggerJsdoc.Options = {
         },
         RegisterRequest: {
           type: 'object',
-          required: ['name', 'email', 'password', 'confirmPassword', 'role', 'termsAccepted'],
+          required: ['name', 'email', 'password', 'confirmPassword', 'userType', 'termsAccepted'],
           properties: {
             name: {
               type: 'string',
@@ -76,10 +76,10 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               example: 'SecurePass123',
             },
-            role: {
+            userType: {
               type: 'string',
               enum: ['seller', 'buyer'],
-              description: 'User role (must be lowercase)',
+              description: 'User role (seller or buyer, case-insensitive)',
               example: 'seller',
             },
             username: {
@@ -133,7 +133,7 @@ const options: swaggerJsdoc.Options = {
                 role: {
                   type: 'string',
                   enum: ['seller', 'buyer'],
-                  example: 'seller',
+                  example: 'buyer',
                 },
                 username: {
                   type: 'string',

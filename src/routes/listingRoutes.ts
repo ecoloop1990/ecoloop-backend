@@ -7,6 +7,7 @@ import {
   getFeed,
   updateListingStatus,
   getMyListings,
+  getListings,
 } from '../controllers/listingController';
 import { authenticate, authorize } from '../middlewares/authMiddleware';
 import { validate } from '../middlewares/validationMiddleware';
@@ -23,7 +24,8 @@ const createManualListingValidation = [
     .isLength({ min: 3, max: 200 })
     .withMessage('Title must be between 3 and 200 characters'),
   body('description')
-    .optional()
+    .notEmpty()
+    .withMessage('Description is required')
     .trim()
     .isLength({ max: 1000 })
     .withMessage('Description must not exceed 1000 characters'),
@@ -32,11 +34,11 @@ const createManualListingValidation = [
     .withMessage('materialType is required')
     .isIn(Object.values(MaterialType))
     .withMessage('Invalid material type'),
-  body('weight')
+  body('quantity')
     .notEmpty()
-    .withMessage('weight is required')
+    .withMessage('quantity is required')
     .isFloat({ min: 0.01 })
-    .withMessage('Weight must be greater than 0'),
+    .withMessage('quantity must be greater than 0'),
   body('unit')
     .optional()
     .isIn(['kg', 'tons', 'lbs', 'pieces'])
@@ -64,7 +66,8 @@ const createManualListingValidation = [
     .isLength({ max: 200 })
     .withMessage('Location must not exceed 200 characters'),
   body('state')
-    .optional()
+    .notEmpty()
+    .withMessage('state is required')
     .trim()
     .isLength({ max: 100 })
     .withMessage('State must not exceed 100 characters'),
@@ -155,6 +158,46 @@ const feedQueryValidation = [
 
 /**
  * @swagger
+ * /api/v1/listings:
+ *   get:
+ *     summary: Get listings filtered by state
+ *     tags: [Listings]
+ *     parameters:
+ *       - in: query
+ *         name: state
+ *         schema:
+ *           type: string
+ *         description: State to filter by (case-insensitive)
+ *         example: Lagos
+ *     responses:
+ *       200:
+ *         description: Listings retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 listings:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Listing'
+ *                 count:
+ *                   type: number
+ *       400:
+ *         description: Validation error
+ */
+router.get(
+  '/',
+  query('state')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('State must not exceed 100 characters'),
+  getListings
+);
+
+/**
+ * @swagger
  * /api/v1/listings/manual:
  *   post:
  *     summary: Create a manual listing
@@ -202,6 +245,7 @@ router.post(
   '/manual',
   authenticate,
   authorize('seller'),
+  upload.single('image'),
   validate(createManualListingValidation),
   createManualListing
 );

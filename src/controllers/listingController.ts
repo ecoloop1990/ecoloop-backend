@@ -15,7 +15,16 @@ export const createManualListing = async (
       next(new AppError('Unauthorized', 401));
       return;
     }
-    const listing = await listingService.createManualListing(req.user.userId, req.body);
+    if (!req.file) {
+      next(new AppError('Image is required', 400));
+      return;
+    }
+
+    const listing = await listingService.createManualListing(
+      req.user.userId,
+      req.body,
+      req.file
+    );
 
     res.status(201).json({
       message: 'Listing created successfully',
@@ -188,6 +197,26 @@ export const getMyListings = async (
     res.status(200).json({ listings, count: listings.length });
   } catch (error) {
     logger.error({ error }, 'Failed to get user listings');
+    next(error);
+  }
+};
+
+export const getListings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const state = req.query.state as string | undefined;
+
+    const listings = await listingService.getListings(state);
+
+    res.status(200).json({
+      listings,
+      count: listings.length,
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get listings');
     next(error);
   }
 };

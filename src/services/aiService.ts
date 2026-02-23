@@ -1,4 +1,5 @@
 import axios from 'axios';
+import FormData from 'form-data';
 import logger from '../config/logger';
 
 export interface AIResponse {
@@ -12,15 +13,17 @@ export class AIService {
 
   constructor() {
     const base = process.env.AI_SERVICE_URL || 'http://localhost:8000';
-    this.aiUrl = base.endsWith('/analyze') ? base : `${base.replace(/\/$/, '')}/analyze`;
+    // Spec: POST {AI_SERVICE_URL}/analyze with form-data:file
+    this.aiUrl = `${base.replace(/\/$/, '')}/analyze`;
   }
 
   async analyzeImage(imageBuffer: Buffer): Promise<AIResponse> {
     try {
-      const response = await axios.post<AIResponse>(this.aiUrl, imageBuffer, {
-        headers: {
-          'Content-Type': 'application/octet-stream',
-        },
+      const form = new FormData();
+      form.append('file', imageBuffer, { filename: 'image.jpg' });
+
+      const response = await axios.post<AIResponse>(this.aiUrl, form, {
+        headers: form.getHeaders(),
         timeout: 10000,
       });
 

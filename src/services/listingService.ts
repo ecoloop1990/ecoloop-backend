@@ -16,41 +16,48 @@ class ListingService {
    */
   async createManualListing(
     sellerId: string,
-    data: CreateListingRequest
+    data: CreateListingRequest,
+    imageFile: Express.Multer.File
   ): Promise<Listing> {
     if (!data.materialType) {
       throw new Error('materialType is required for manual listing creation');
     }
 
-    if (data.weight === undefined || Number.isNaN(Number(data.weight))) {
-      throw new Error('weight is required for manual listing creation');
+    if (data.quantity === undefined || Number.isNaN(Number(data.quantity))) {
+      throw new Error('quantity is required for manual listing creation');
     }
 
-    const weight = Number(data.weight);
-    if (weight <= 0) {
-      throw new Error('weight must be greater than 0');
+    const quantity = Number(data.quantity);
+    if (quantity <= 0) {
+      throw new Error('quantity must be greater than 0');
     }
+
+    if (!imageFile?.buffer) {
+      throw new Error('Image is required for manual listing creation');
+    }
+
+    // Upload image to S3
+    const tempId = `manual-${Date.now()}`;
+    const s3Key = s3Service.generateListingImageKey(tempId, imageFile.originalname);
+    const imageUrl = await s3Service.uploadFile(imageFile.buffer, s3Key, imageFile.mimetype);
 
     return this.createBaseListing({
       sellerId,
       title: data.title,
       description: data.description,
       materialType: data.materialType,
-      quantity: weight,
+      quantity,
       unit: data.unit ?? 'kg',
       price: data.price,
       currency: data.currency ?? 'NGN',
-      imageUrl: data.imageUrl,
-      latitude: data.latitude,
-      longitude: data.longitude,
+      imageUrl,
       location: data.location,
       state: data.state,
       notes: data.notes,
       status: ListingStatus.ACTIVE,
-      createType: 'manual',
       detectedItems: [],
-      totalWeight: weight,
-      carbonFootprint: undefined,
+      totalWeight: quantity,
+      carbonFootprint: data.carbonFootprint,
     });
   }
 
@@ -98,18 +105,15 @@ class ListingService {
       title: data.title,
       description: data.description,
       materialType: firstDetectedMaterial as MaterialType,
-      quantity: ai.total_weight,
+      quantity: normalizedDetected.length,
       unit: data.unit ?? 'kg',
       price: data.price,
       currency: data.currency ?? 'NGN',
       imageUrl,
-      latitude: data.latitude,
-      longitude: data.longitude,
       location: data.location,
       state: data.state,
       notes: data.notes,
       status: ListingStatus.ACTIVE,
-      createType: 'ai',
       detectedItems: normalizedDetected,
       totalWeight: ai.total_weight,
       carbonFootprint: ai.total_carbon_footprint,
@@ -136,7 +140,6 @@ class ListingService {
     state?: string;
     notes?: string;
     status: ListingStatus;
-    createType: 'ai' | 'manual';
     detectedItems: string[];
     totalWeight: number;
     carbonFootprint?: number;
@@ -156,7 +159,6 @@ class ListingService {
       state: params.state,
       notes: params.notes,
       status: params.status,
-      createType: params.createType,
       detectedItems: params.detectedItems,
       totalWeight: params.totalWeight,
       carbonFootprint: params.carbonFootprint,
@@ -166,7 +168,7 @@ class ListingService {
     const listing = await listingRepository.create(data);
 
     logger.info(
-      { listingId: listing.id, sellerId: params.sellerId, createType: params.createType },
+      { listingId: listing.id, sellerId: params.sellerId },
       'Listing created'
     );
 
@@ -244,6 +246,10 @@ class ListingService {
 
   async getListingsBySeller(sellerId: string): Promise<Listing[]> {
     return listingRepository.findBySellerId(sellerId);
+  }
+
+  async getListings(state?: string): Promise<Listing[]> {
+    return listingRepository.findByState(state);
   }
 
   // No legacy AI helpers here by design.

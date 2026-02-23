@@ -85,14 +85,13 @@ const registerValidation = [
       }
       return true;
     }),
-  body('role')
-    .notEmpty()
-    .withMessage('Role is required')
-    .isIn(['seller', 'buyer'])
-    .withMessage('Role must be either "seller" or "buyer" (lowercase)')
+  body('userType')
+    .optional()
+    .isString()
     .custom((value) => {
-      if (value !== value.toLowerCase()) {
-        throw new Error('Role must be in lowercase');
+      const v = (value as string).toLowerCase();
+      if (v !== 'seller' && v !== 'buyer') {
+        throw new Error('userType must be either "seller" or "buyer"');
       }
       return true;
     }),

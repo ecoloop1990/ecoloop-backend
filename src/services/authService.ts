@@ -37,10 +37,10 @@ class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(data.password, this.saltRounds);
 
-    // Validate and normalize role
-    const role = (data.role || 'seller').toLowerCase();
-    if (role !== 'seller' && role !== 'buyer') {
-      throw new Error('Role must be either "seller" or "buyer"');
+    // Validate and normalize userType / role
+    const userType = (data.userType || 'buyer').toLowerCase();
+    if (userType !== 'seller' && userType !== 'buyer') {
+      throw new Error('userType must be either "seller" or "buyer"');
     }
 
     // Create user
@@ -48,7 +48,7 @@ class AuthService {
       name: data.name,
       email: data.email,
       password: hashedPassword,
-      role: role as UserRole,
+      role: userType as UserRole,
       username: data.username,
     });
 

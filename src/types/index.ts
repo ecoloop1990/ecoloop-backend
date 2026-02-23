@@ -14,7 +14,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
-  role: 'seller' | 'buyer';
+  userType?: 'seller' | 'buyer';
   username?: string;
   termsAccepted: boolean;
 }
@@ -27,20 +27,15 @@ export interface LoginRequest {
 export interface CreateListingRequest {
   title: string;
   description?: string;
-  materialType?: MaterialType;
-  quantity?: number;
+  materialType?: MaterialType; // required for manual, optional for AI
+  quantity?: number; // required for manual
   unit?: string;
   price: number;
   currency?: string;
-  latitude?: number;
-  longitude?: number;
   location?: string;
   state?: string;
   notes?: string;
-  imageUrl?: string;
-  createType: 'ai' | 'manual';
-  weight?: number; // For manual creation
-  material?: string; // For manual creation
+  carbonFootprint?: number; // optional manual carbon footprint
 }
 
 export interface FeedQueryParams {
