@@ -53,7 +53,7 @@ const options: swaggerJsdoc.Options = {
         },
         RegisterRequest: {
           type: 'object',
-          required: ['name', 'email', 'password', 'confirmPassword', 'userType', 'termsAccepted'],
+          required: ['name', 'email', 'password', 'confirmPassword', 'role', 'termsAccepted'],
           properties: {
             name: {
               type: 'string',
@@ -76,16 +76,18 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               example: 'SecurePass123',
             },
-            userType: {
+            role: {
               type: 'string',
-              enum: ['INDIVIDUAL', 'COMPANY'],
-              example: 'INDIVIDUAL',
+              enum: ['seller', 'buyer'],
+              description: 'User role (must be lowercase)',
+              example: 'seller',
             },
             username: {
               type: 'string',
               minLength: 3,
               maxLength: 30,
               pattern: '^[a-zA-Z0-9_]+$',
+              description: 'Optional: Unique username',
               example: 'johndoe',
             },
             termsAccepted: {
@@ -130,11 +132,8 @@ const options: swaggerJsdoc.Options = {
                 },
                 role: {
                   type: 'string',
-                  enum: ['SELLER', 'BUYER'],
-                },
-                userType: {
-                  type: 'string',
-                  enum: ['INDIVIDUAL', 'COMPANY'],
+                  enum: ['seller', 'buyer'],
+                  example: 'seller',
                 },
                 username: {
                   type: 'string',
@@ -157,7 +156,7 @@ const options: swaggerJsdoc.Options = {
         },
         CreateListingRequest: {
           type: 'object',
-          required: ['title', 'materialType', 'quantity', 'price'],
+          required: ['title', 'price', 'createType'],
           properties: {
             title: {
               type: 'string',
@@ -170,15 +169,35 @@ const options: swaggerJsdoc.Options = {
               maxLength: 1000,
               example: 'Industrial polymer, recyclable',
             },
+            createType: {
+              type: 'string',
+              enum: ['ai', 'manual'],
+              description: 'Creation type: "ai" for AI analysis or "manual" for manual entry',
+              example: 'ai',
+            },
             materialType: {
               type: 'string',
               enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'ELECTRONICS', 'TEXTILES', 'OTHER'],
+              description: 'Required for manual creation, optional for AI',
               example: 'PLASTIC',
             },
             quantity: {
               type: 'number',
               minimum: 0.01,
+              description: 'Optional: Will be set from AI analysis if createType is "ai"',
               example: 5.0,
+            },
+            weight: {
+              type: 'number',
+              minimum: 0.01,
+              description: 'Required for manual creation',
+              example: 50,
+            },
+            material: {
+              type: 'string',
+              maxLength: 100,
+              description: 'Required for manual creation',
+              example: 'Plastic',
             },
             unit: {
               type: 'string',
@@ -214,6 +233,11 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               maxLength: 200,
               example: 'Lagos, Nigeria',
+            },
+            state: {
+              type: 'string',
+              maxLength: 100,
+              example: 'lagos',
             },
             notes: {
               type: 'string',
@@ -276,6 +300,33 @@ const options: swaggerJsdoc.Options = {
             },
             recyclability: {
               type: 'number',
+            },
+            createType: {
+              type: 'string',
+              enum: ['ai', 'manual'],
+              example: 'ai',
+            },
+            detectedItems: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              description: 'Items detected by AI analysis',
+              example: ['plastic bottle', 'aluminum can'],
+            },
+            totalWeight: {
+              type: 'number',
+              description: 'Total weight from AI analysis',
+              example: 5.2,
+            },
+            carbonFootprint: {
+              type: 'number',
+              description: 'Carbon footprint from AI analysis',
+              example: 12.5,
+            },
+            state: {
+              type: 'string',
+              example: 'lagos',
             },
             seller: {
               type: 'object',
@@ -475,7 +526,7 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ['./src/routes/*.ts'],
+  apis: ['./src/routes/*.ts', './src/types/*.ts'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);

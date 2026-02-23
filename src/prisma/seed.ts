@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, UserType, MaterialType } from '@prisma/client';
+import { PrismaClient, MaterialType, UserRole } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -16,8 +16,7 @@ async function main() {
       name: 'Green Steel Corp',
       email: 'seller1@ecoloop.com',
       password: hashedPassword,
-      role: UserRole.SELLER,
-      userType: UserType.COMPANY,
+      role: 'seller' as UserRole,
       username: 'greensteel',
     },
   });
@@ -29,8 +28,7 @@ async function main() {
       name: 'Alex Rivera',
       email: 'seller2@ecoloop.com',
       password: hashedPassword,
-      role: UserRole.SELLER,
-      userType: UserType.INDIVIDUAL,
+      role: 'seller' as UserRole,
       username: 'alexrivera',
     },
   });
@@ -42,8 +40,7 @@ async function main() {
       name: 'Recycle Pro Inc',
       email: 'buyer1@ecoloop.com',
       password: hashedPassword,
-      role: UserRole.BUYER,
-      userType: UserType.COMPANY,
+      role: 'buyer' as UserRole,
       username: 'recyclepro',
     },
   });

@@ -4,7 +4,7 @@ import { env } from '../config/env';
 import logger from '../config/logger';
 import userRepository from '../repositories/userRepository';
 import { RegisterRequest, LoginRequest, JWTPayload } from '../types';
-import { UserRole, UserType } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 
 class AuthService {
   private readonly saltRounds = 10;
@@ -37,13 +37,18 @@ class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(data.password, this.saltRounds);
 
+    // Validate and normalize role
+    const role = (data.role || 'seller').toLowerCase();
+    if (role !== 'seller' && role !== 'buyer') {
+      throw new Error('Role must be either "seller" or "buyer"');
+    }
+
     // Create user
     const user = await userRepository.create({
       name: data.name,
       email: data.email,
       password: hashedPassword,
-      userType: data.userType || UserType.INDIVIDUAL,
-      role: UserRole.SELLER, // Default to SELLER, can be changed later
+      role: role as UserRole,
       username: data.username,
     });
 

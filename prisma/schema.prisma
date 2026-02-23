@@ -11,13 +11,8 @@ datasource db {
 }
 
 enum UserRole {
-  SELLER
-  BUYER
-}
-
-enum UserType {
-  INDIVIDUAL
-  COMPANY
+  seller
+  buyer
 }
 
 enum MaterialType {
@@ -26,9 +21,7 @@ enum MaterialType {
   PLASTIC
   GLASS
   CARDBOARD
-  ELECTRONICS
-  TEXTILES
-  OTHER
+  BIODEGRADABLE
 }
 
 enum ListingStatus {
@@ -51,8 +44,7 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role      UserRole @default(SELLER)
-  userType  UserType @default(INDIVIDUAL)
+  role      UserRole @default(seller)
   username  String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -80,10 +72,15 @@ model Listing {
   latitude    Float?
   longitude   Float?
   location    String?
+  state       String?
   status      ListingStatus @default(ACTIVE)
   notes       String?
   co2Saved    Float?
   recyclability Float?
+  createType  String?       @default("manual")
+  detectedItems String[]
+  totalWeight   Float?
+  carbonFootprint Float?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -96,6 +93,7 @@ model Listing {
   @@index([status])
   @@index([materialType])
   @@index([latitude, longitude])
+  @@index([state])
   @@index([createdAt])
 }
 

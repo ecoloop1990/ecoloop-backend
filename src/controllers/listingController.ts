@@ -16,6 +16,12 @@ export const createListing = async (
       return;
     }
 
+    // Validate createType
+    if (!req.body.createType || !['ai', 'manual'].includes(req.body.createType)) {
+      next(new AppError('createType must be either "ai" or "manual"', 400));
+      return;
+    }
+
     const imageFile = req.file
       ? {
           buffer: req.file.buffer,
@@ -24,16 +30,26 @@ export const createListing = async (
         }
       : undefined;
 
-    const listing = await listingService.createListing(
-      req.user.userId,
-      req.body,
-      imageFile
-    );
+    try {
+      const listing = await listingService.createListing(
+        req.user.userId,
+        req.body,
+        imageFile
+      );
 
-    res.status(201).json({
-      message: 'Listing created successfully',
-      listing,
-    });
+      res.status(201).json({
+        message: 'Listing created successfully',
+        listing,
+      });
+    } catch (error) {
+      // Check if it's an AI service error
+      if (error instanceof Error && error.message.includes('AI service')) {
+        logger.error({ error }, 'AI service error');
+        next(new AppError('AI service is currently unavailable. Please try again later.', 502));
+        return;
+      }
+      throw error;
+    }
   } catch (error) {
     logger.error({ error }, 'Failed to create listing');
     if (error instanceof Error) {

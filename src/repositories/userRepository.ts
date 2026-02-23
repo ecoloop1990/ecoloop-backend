@@ -1,12 +1,11 @@
 import prisma from '../config/database';
-import { User, UserRole, UserType } from '@prisma/client';
+import { User, UserRole } from '@prisma/client';
 
 export interface CreateUserData {
   name: string;
   email: string;
   password: string;
   role?: UserRole;
-  userType?: UserType;
   username?: string;
 }
 
@@ -32,7 +31,6 @@ class UserRepository {
         email: true,
         password: true,
         role: true,
-        userType: true,
         username: true,
         createdAt: true,
         updatedAt: true,
