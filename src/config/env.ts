@@ -18,6 +18,7 @@ interface EnvConfig {
   AI_SERVICE_TIMEOUT: number;
   LOG_LEVEL: string;
   CORS_ORIGIN: string;
+  FRONTEND_URL: string;
   RATE_LIMIT_WINDOW_MS: number;
   RATE_LIMIT_MAX_REQUESTS: number;
 }
@@ -47,10 +48,11 @@ export const env: EnvConfig = {
   AWS_ACCESS_KEY_ID: getEnvVar('AWS_ACCESS_KEY_ID'),
   AWS_SECRET_ACCESS_KEY: getEnvVar('AWS_SECRET_ACCESS_KEY'),
   S3_BUCKET_NAME: getEnvVar('S3_BUCKET_NAME'),
-  AI_SERVICE_URL: getEnvVar('AI_SERVICE_URL', 'http://localhost:8000'),
+  AI_SERVICE_URL: getEnvVar('AI_SERVICE_URL', 'http://127.0.0.1:8000'),
   AI_SERVICE_TIMEOUT: getEnvNumber('AI_SERVICE_TIMEOUT', 3000),
   LOG_LEVEL: getEnvVar('LOG_LEVEL', 'info'),
   CORS_ORIGIN: getEnvVar('CORS_ORIGIN', 'http://localhost:3000'),
+  FRONTEND_URL: getEnvVar('FRONTEND_URL', 'http://localhost:3000'),
   RATE_LIMIT_WINDOW_MS: getEnvNumber('RATE_LIMIT_WINDOW_MS', 900000),
   RATE_LIMIT_MAX_REQUESTS: getEnvNumber('RATE_LIMIT_MAX_REQUESTS', 100),
 };

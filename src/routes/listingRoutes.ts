@@ -26,16 +26,28 @@ const createListingValidation = [
     .trim()
     .isLength({ max: 1000 })
     .withMessage('Description must not exceed 1000 characters'),
-  body('materialType')
+  body('createType')
     .notEmpty()
-    .withMessage('Material type is required')
+    .withMessage('createType is required')
+    .isIn(['ai', 'manual'])
+    .withMessage('createType must be either "ai" or "manual"'),
+  body('materialType')
+    .optional()
     .isIn(Object.values(MaterialType))
     .withMessage('Invalid material type'),
   body('quantity')
-    .notEmpty()
-    .withMessage('Quantity is required')
+    .optional()
     .isFloat({ min: 0.01 })
     .withMessage('Quantity must be greater than 0'),
+  body('weight')
+    .optional()
+    .isFloat({ min: 0.01 })
+    .withMessage('Weight must be greater than 0'),
+  body('material')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Material must not exceed 100 characters'),
   body('unit')
     .optional()
     .isIn(['kg', 'tons', 'lbs', 'pieces'])
@@ -62,6 +74,11 @@ const createListingValidation = [
     .trim()
     .isLength({ max: 200 })
     .withMessage('Location must not exceed 200 characters'),
+  body('state')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('State must not exceed 100 characters'),
   body('notes')
     .optional()
     .trim()
@@ -131,23 +148,28 @@ const feedQueryValidation = [
  *             type: object
  *             required:
  *               - title
- *               - materialType
- *               - quantity
  *               - price
+ *               - createType
  *             properties:
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: Material image (JPEG, PNG, WebP, max 10MB)
+ *                 description: Material image (JPEG, PNG, WebP, max 10MB) - Required for AI creation
  *               title:
  *                 type: string
  *                 example: "Grade A Plastic Scrap"
  *               description:
  *                 type: string
  *                 example: "Industrial polymer, recyclable"
+ *               createType:
+ *                 type: string
+ *                 enum: [ai, manual]
+ *                 description: "Creation type: 'ai' for AI analysis or 'manual' for manual entry"
+ *                 example: "ai"
  *               materialType:
  *                 type: string
  *                 enum: [WOOD, METAL, PLASTIC, GLASS, CARDBOARD, ELECTRONICS, TEXTILES, OTHER]
+ *                 description: "Required for manual, optional for AI"
  *                 example: "PLASTIC"
  *               quantity:
  *                 type: number
@@ -210,7 +232,7 @@ const feedQueryValidation = [
 router.post(
   '/',
   authenticate,
-  authorize('SELLER'),
+  authorize('seller'),
   upload.single('image'),
   validate(createListingValidation),
   createListing
@@ -443,7 +465,7 @@ router.get(
 router.patch(
   '/:id/status',
   authenticate,
-  authorize('SELLER'),
+  authorize('seller'),
   validate(updateStatusValidation),
   updateListingStatus
 );

@@ -17,12 +17,16 @@ app.use(helmet());
 // CORS configuration
 app.use(
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: env.FRONTEND_URL || env.CORS_ORIGIN,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
+    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
   })
 );
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -72,6 +76,11 @@ if (env.NODE_ENV === 'development' || process.env.ENABLE_SWAGGER === 'true') {
 
 // API routes
 app.use(`/api/${env.API_VERSION}`, routes);
+
+// Fallback route for unmatched paths
+app.use('*', (_req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
 // 404 handler
 app.use(notFoundHandler);

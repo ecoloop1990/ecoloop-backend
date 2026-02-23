@@ -13,6 +13,81 @@ class AIService {
   }
 
   /**
+   * Analyze image and get waste data
+   * @param imageFile Image file buffer
+   * @returns Analysis result with weight, carbon footprint, and detected items
+   */
+  async analyzeImage(
+    imageFile: Buffer
+  ): Promise<{
+    total_weight: number;
+    total_carbon_footprint: number;
+    detected_items: string[];
+  } | null> {
+    const startTime = Date.now();
+
+    try {
+      // Convert buffer to base64 for sending to AI service
+      const base64Image = imageFile.toString('base64');
+
+      logger.info({ imageSize: imageFile.length }, 'Sending image to AI service for analysis');
+
+      const response = await axios.post<{
+        total_weight: number;
+        total_carbon_footprint: number;
+        detected_items: string[];
+      }>(
+        `${this.baseUrl}/analyze`,
+        {
+          image: base64Image,
+        },
+        {
+          timeout: this.timeout,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const latency = Date.now() - startTime;
+
+      logger.info(
+        {
+          totalWeight: response.data.total_weight,
+          carbonFootprint: response.data.total_carbon_footprint,
+          detectedItems: response.data.detected_items,
+          latency,
+        },
+        'AI analysis successful'
+      );
+
+      return response.data;
+    } catch (error) {
+      const latency = Date.now() - startTime;
+
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError;
+        logger.error(
+          {
+            error: axiosError.message,
+            status: axiosError.response?.status,
+            latency,
+          },
+          'AI service request failed'
+        );
+      } else {
+        logger.error(
+          { error, latency },
+          'Unexpected error in AI service'
+        );
+      }
+
+      // Return null instead of throwing to allow graceful fallback
+      return null;
+    }
+  }
+
+  /**
    * Predict material class from image
    * @param imageUrl URL of the image to analyze
    * @returns Prediction result with class and confidence

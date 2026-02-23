@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import { register, login } from '../controllers/authController';
 import { validate } from '../middlewares/validationMiddleware';
-import { UserType } from '@prisma/client';
 
 const router = Router();
 
@@ -23,7 +22,7 @@ const router = Router();
  *             email: "john@example.com"
  *             password: "SecurePass123"
  *             confirmPassword: "SecurePass123"
- *             userType: "INDIVIDUAL"
+ *             role: "seller"
  *             username: "johndoe"
  *             termsAccepted: true
  *     responses:
@@ -39,8 +38,7 @@ const router = Router();
  *                 id: "123e4567-e89b-12d3-a456-426614174000"
  *                 name: "John Doe"
  *                 email: "john@example.com"
- *                 role: "SELLER"
- *                 userType: "INDIVIDUAL"
+ *                 role: "seller"
  *                 username: "johndoe"
  *                 createdAt: "2024-01-01T00:00:00.000Z"
  *                 updatedAt: "2024-01-01T00:00:00.000Z"
@@ -87,10 +85,17 @@ const registerValidation = [
       }
       return true;
     }),
-  body('userType')
-    .optional()
-    .isIn([UserType.INDIVIDUAL, UserType.COMPANY])
-    .withMessage('Invalid user type'),
+  body('role')
+    .notEmpty()
+    .withMessage('Role is required')
+    .isIn(['seller', 'buyer'])
+    .withMessage('Role must be either "seller" or "buyer" (lowercase)')
+    .custom((value) => {
+      if (value !== value.toLowerCase()) {
+        throw new Error('Role must be in lowercase');
+      }
+      return true;
+    }),
   body('username')
     .optional()
     .trim()
@@ -131,8 +136,7 @@ const registerValidation = [
  *                 id: "123e4567-e89b-12d3-a456-426614174000"
  *                 name: "John Doe"
  *                 email: "john@example.com"
- *                 role: "SELLER"
- *                 userType: "INDIVIDUAL"
+ *                 role: "seller"
  *                 username: "johndoe"
  *                 createdAt: "2024-01-01T00:00:00.000Z"
  *                 updatedAt: "2024-01-01T00:00:00.000Z"

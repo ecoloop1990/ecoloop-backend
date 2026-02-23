@@ -127,6 +127,36 @@ class ListingRepository {
       where: { id },
     });
   }
+
+  async findByState(state?: string): Promise<Listing[]> {
+    const where: Prisma.ListingWhereInput & { state?: { equals: string; mode: 'insensitive' } } = {
+      status: {
+        not: 'COMPLETED',
+      },
+    };
+
+    if (state) {
+      where.state = {
+        equals: state,
+        mode: 'insensitive',
+      };
+    }
+
+    return prisma.listing.findMany({
+      where: where as Prisma.ListingWhereInput,
+      include: {
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            username: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
 
 export default new ListingRepository();

@@ -1,6 +1,6 @@
-import { UserRole, UserType, MaterialType, ListingStatus, TransactionStatus } from '@prisma/client';
+import { UserRole, MaterialType, ListingStatus, TransactionStatus } from '@prisma/client';
 
-export { UserRole, UserType, MaterialType, ListingStatus, TransactionStatus };
+export { UserRole, MaterialType, ListingStatus, TransactionStatus };
 
 
 export interface JWTPayload {
@@ -14,7 +14,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
-  userType: UserType;
+  role: 'seller' | 'buyer';
   username?: string;
   termsAccepted: boolean;
 }
@@ -27,16 +27,20 @@ export interface LoginRequest {
 export interface CreateListingRequest {
   title: string;
   description?: string;
-  materialType: MaterialType;
-  quantity: number;
+  materialType?: MaterialType;
+  quantity?: number;
   unit?: string;
   price: number;
   currency?: string;
   latitude?: number;
   longitude?: number;
   location?: string;
+  state?: string;
   notes?: string;
   imageUrl?: string;
+  createType: 'ai' | 'manual';
+  weight?: number; // For manual creation
+  material?: string; // For manual creation
 }
 
 export interface FeedQueryParams {
