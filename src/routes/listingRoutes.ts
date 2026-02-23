@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { body, param, query } from 'express-validator';
 import {
-  createListing,
+  createManualListing,
+  createAIListing,
   getListingById,
   getFeed,
   updateListingStatus,
@@ -14,7 +15,7 @@ import { MaterialType, ListingStatus } from '@prisma/client';
 
 const router = Router();
 
-const createListingValidation = [
+const createManualListingValidation = [
   body('title')
     .trim()
     .notEmpty()
@@ -26,28 +27,16 @@ const createListingValidation = [
     .trim()
     .isLength({ max: 1000 })
     .withMessage('Description must not exceed 1000 characters'),
-  body('createType')
-    .notEmpty()
-    .withMessage('createType is required')
-    .isIn(['ai', 'manual'])
-    .withMessage('createType must be either "ai" or "manual"'),
   body('materialType')
-    .optional()
+    .notEmpty()
+    .withMessage('materialType is required')
     .isIn(Object.values(MaterialType))
     .withMessage('Invalid material type'),
-  body('quantity')
-    .optional()
-    .isFloat({ min: 0.01 })
-    .withMessage('Quantity must be greater than 0'),
   body('weight')
-    .optional()
+    .notEmpty()
+    .withMessage('weight is required')
     .isFloat({ min: 0.01 })
     .withMessage('Weight must be greater than 0'),
-  body('material')
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Material must not exceed 100 characters'),
   body('unit')
     .optional()
     .isIn(['kg', 'tons', 'lbs', 'pieces'])
@@ -84,6 +73,38 @@ const createListingValidation = [
     .trim()
     .isLength({ max: 1000 })
     .withMessage('Notes must not exceed 1000 characters'),
+];
+
+const createAIListingValidation = [
+  body('title')
+    .trim()
+    .notEmpty()
+    .withMessage('Title is required')
+    .isLength({ min: 3, max: 200 })
+    .withMessage('Title must be between 3 and 200 characters'),
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ max: 1000 })
+    .withMessage('Description must not exceed 1000 characters'),
+  body('unit')
+    .optional()
+    .isIn(['kg', 'tons', 'lbs', 'pieces'])
+    .withMessage('Invalid unit'),
+  body('price')
+    .notEmpty()
+    .withMessage('Price is required')
+    .isFloat({ min: 0 })
+    .withMessage('Price must be greater than or equal to 0'),
+  body('currency')
+    .optional()
+    .isLength({ min: 3, max: 3 })
+    .withMessage('Currency must be a 3-letter code'),
+  body('state')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('State must not exceed 100 characters'),
 ];
 
 const updateStatusValidation = [
@@ -134,9 +155,62 @@ const feedQueryValidation = [
 
 /**
  * @swagger
- * /api/v1/listings:
+ * /api/v1/listings/manual:
  *   post:
- *     summary: Create a new listing
+ *     summary: Create a manual listing
+ *     tags: [Listings]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - materialType
+ *               - weight
+ *               - price
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               materialType:
+ *                 type: string
+ *                 enum: [METAL, PLASTIC, WOOD, CARDBOARD, GLASS, BIODEGRADABLE]
+ *               weight:
+ *                 type: number
+ *               price:
+ *                 type: number
+ *               currency:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Listing created successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.post(
+  '/manual',
+  authenticate,
+  authorize('seller'),
+  validate(createManualListingValidation),
+  createManualListing
+);
+
+/**
+ * @swagger
+ * /api/v1/listings/ai:
+ *   post:
+ *     summary: Create a listing using AI image analysis
  *     tags: [Listings]
  *     security:
  *       - bearerAuth: []
@@ -147,95 +221,38 @@ const feedQueryValidation = [
  *           schema:
  *             type: object
  *             required:
+ *               - image
  *               - title
  *               - price
- *               - createType
  *             properties:
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: Material image (JPEG, PNG, WebP, max 10MB) - Required for AI creation
  *               title:
  *                 type: string
- *                 example: "Grade A Plastic Scrap"
  *               description:
  *                 type: string
- *                 example: "Industrial polymer, recyclable"
- *               createType:
- *                 type: string
- *                 enum: [ai, manual]
- *                 description: "Creation type: 'ai' for AI analysis or 'manual' for manual entry"
- *                 example: "ai"
- *               materialType:
- *                 type: string
- *                 enum: [WOOD, METAL, PLASTIC, GLASS, CARDBOARD, ELECTRONICS, TEXTILES, OTHER]
- *                 description: "Required for manual, optional for AI"
- *                 example: "PLASTIC"
- *               quantity:
- *                 type: number
- *                 example: 5.0
- *               unit:
- *                 type: string
- *                 enum: [kg, tons, lbs, pieces]
- *                 example: "tons"
  *               price:
  *                 type: number
- *                 example: 165000
  *               currency:
  *                 type: string
- *                 example: "NGN"
- *               latitude:
- *                 type: number
- *                 example: 6.5244
- *               longitude:
- *                 type: number
- *                 example: 3.3792
- *               location:
+ *               state:
  *                 type: string
- *                 example: "Lagos, Nigeria"
- *               notes:
- *                 type: string
- *                 example: "Material is sorted and baled"
  *     responses:
  *       201:
- *         description: Listing created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Listing created successfully"
- *                 listing:
- *                   $ref: '#/components/schemas/Listing'
+ *         description: AI listing created successfully
  *       400:
- *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - SELLER role required
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *         description: Image missing
+ *       502:
+ *         description: AI analysis failed
  */
-// Protected routes
 router.post(
-  '/',
+  '/ai',
   authenticate,
   authorize('seller'),
   upload.single('image'),
-  validate(createListingValidation),
-  createListing
+  validate(createAIListingValidation),
+  createAIListing
 );
 
 /**
@@ -273,7 +290,7 @@ router.post(
  *         name: materialType
  *         schema:
  *           type: string
- *           enum: [WOOD, METAL, PLASTIC, GLASS, CARDBOARD, ELECTRONICS, TEXTILES, OTHER]
+ *           enum: [WOOD, METAL, PLASTIC, GLASS, CARDBOARD, BIODEGRADABLE]
  *         description: Filter by material type
  *         example: "PLASTIC"
  *       - in: query

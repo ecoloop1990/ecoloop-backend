@@ -177,7 +177,7 @@ const options: swaggerJsdoc.Options = {
             },
             materialType: {
               type: 'string',
-              enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'ELECTRONICS', 'TEXTILES', 'OTHER'],
+              enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'BIODEGRADABLE'],
               description: 'Required for manual creation, optional for AI',
               example: 'PLASTIC',
             },
@@ -261,7 +261,7 @@ const options: swaggerJsdoc.Options = {
             },
             materialType: {
               type: 'string',
-              enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'ELECTRONICS', 'TEXTILES', 'OTHER'],
+              enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'BIODEGRADABLE'],
             },
             quantity: {
               type: 'number',
@@ -526,7 +526,8 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ['./src/routes/*.ts', './src/types/*.ts'],
+  // In dev we load annotations from TS. In production build, load from dist JS.
+  apis: ['./src/routes/*.ts', './dist/routes/*.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
