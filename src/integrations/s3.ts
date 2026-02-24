@@ -41,7 +41,7 @@ class S3Service {
         Key: key,
         Body: file,
         ContentType: contentType,
-        ACL: 'public-read', // Adjust based on your security requirements
+        // ACL: 'public-read', // Adjust based on your security requirements
       });
 
       await this.client.send(command);
