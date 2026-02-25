@@ -35,7 +35,7 @@ export interface CreateListingRequest {
   location?: string;
   state?: string;
   notes?: string;
-  carbonFootprint?: number; // optional manual carbon footprint
+  // carbonFootprint?: number; // optional manual carbon footprint
 }
 
 export interface FeedQueryParams {
