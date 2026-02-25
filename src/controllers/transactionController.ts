@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import transactionService from '../services/transactionService';
-import { AppError } from '../middlewares/errorHandler';
+import { AppError } from '../middlewares/errorHandler'
 import logger from '../config/logger';
 
 export const createTransaction = async (
