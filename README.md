@@ -229,8 +229,7 @@ POST /api/v1/auth/register
     "id": "uuid",
     "name": "John Doe",
     "email": "john@example.com",
-    "role": "SELLER",
-    "userType": "INDIVIDUAL",
+    "userType": "seller",
     "username": "johndoe"
   },
   "token": "jwt-token"
@@ -400,6 +399,51 @@ The application uses a centralized error handler:
 ## 🔧 Environment Variables
 
 See `.env.example` for all required environment variables.
+
+## 📚 API Documentation (Swagger)
+
+- Swagger UI is available (in development or when `ENABLE_SWAGGER=true`) at:
+  - `http://localhost:5000/api/docs`
+- Key documented endpoints:
+  - `POST /api/v1/auth/register` – registration with `userType` (`seller` | `buyer`)
+  - `POST /api/v1/listings/manual` – create manual listings with image, materialType, quantity, price, currency, state
+  - `POST /api/v1/listings/ai` – create AI-powered listings from an image (stores `detectedItems`, `totalWeight`, `carbonFootprint`)
+  - `GET /api/v1/listings` – marketplace listings filtered by `state`, sorted by `createdAt` (DESC)
+
+## 🛠️ CI/CD Pipeline (GitHub Actions → Docker → ECR → K8s)
+
+This repository ships with a CI/CD workflow at `.github/workflows/backend-ci.yml`:
+
+- **Triggers**:
+  - On `push` and `pull_request` to `main`.
+- **CI steps**:
+  - Setup Node.js 20
+  - `npm install`
+  - `npm run lint`
+  - `npm test`
+  - `npm run build`
+- **Docker & ECR** (only on `main`):
+  - Logs into AWS ECR
+  - Builds Docker image: `ecoloop-backend`
+  - Tags image with current Git SHA
+  - Pushes to `${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${GITHUB_SHA}`
+- **Deploy (optional)**:
+  - Uses `kubectl` with a kubeconfig provided via GitHub Secret `KUBECONFIG`
+  - Updates the `ecoloop-backend` deployment image to the new ECR image
+  - Waits for rollout (`kubectl rollout status`)
+
+### Required GitHub Secrets
+
+To use the full CI/CD pipeline, configure these repository secrets:
+
+- `AWS_ACCESS_KEY_ID` – IAM user/role key with ECR & EKS permissions
+- `AWS_SECRET_ACCESS_KEY` – secret associated with the above key
+- `AWS_REGION` – AWS region (e.g. `us-east-1`)
+- `AWS_ACCOUNT_ID` – AWS account ID (for ECR registry URL)
+- `ECR_REPOSITORY` – name of the ECR repository for this backend
+- `KUBECONFIG` – base64-encoded kubeconfig for the target cluster
+- `DB_URL` – PostgreSQL connection string (e.g. AWS RDS)
+- `S3_BUCKET` – S3 bucket name for file storage
 
 ## 📄 License
 

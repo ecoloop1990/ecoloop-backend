@@ -4,7 +4,7 @@ import { env } from '../config/env';
 import logger from '../config/logger';
 import userRepository from '../repositories/userRepository';
 import { RegisterRequest, LoginRequest, JWTPayload } from '../types';
-import { UserRole } from '@prisma/client';
+import { UserType } from '@prisma/client';
 
 class AuthService {
   private readonly saltRounds = 10;
@@ -37,7 +37,7 @@ class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(data.password, this.saltRounds);
 
-    // Validate and normalize userType / role
+    // Validate and normalize userType
     const userType = (data.userType || 'buyer').toLowerCase();
     if (userType !== 'seller' && userType !== 'buyer') {
       throw new Error('userType must be either "seller" or "buyer"');
@@ -48,7 +48,7 @@ class AuthService {
       name: data.name,
       email: data.email,
       password: hashedPassword,
-      role: userType as UserRole,
+      userType: userType as UserType,
       username: data.username,
     });
 
@@ -56,7 +56,7 @@ class AuthService {
     const token = this.generateToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      userType: user.userType,
     });
 
     logger.info({ userId: user.id, email: user.email }, 'User registered successfully');
@@ -84,7 +84,7 @@ class AuthService {
     const token = this.generateToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      userType: user.userType,
     });
 
     logger.info({ userId: user.id, email: user.email }, 'User logged in successfully');
