@@ -75,6 +75,7 @@ model Listing {
   state       String?
   status      ListingStatus @default(ACTIVE)
   notes       String?
+  co2Saved    Float?
   recyclability Float?
   createType  String?       @default("manual")
   detectedItems String[]
@@ -102,7 +103,7 @@ model Transaction {
   buyerId     String
   sellerId    String
   status      TransactionStatus @default(PENDING)
-  carbonFootprint Float?
+  co2Saved    Float?
   price       Float
   quantity    Float
   createdAt   DateTime          @default(now())

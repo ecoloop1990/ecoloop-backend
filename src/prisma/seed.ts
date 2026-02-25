@@ -61,7 +61,6 @@ async function main() {
       longitude: 3.3792,
       location: 'Lagos, Nigeria',
       notes: 'Material is sorted and baled. Pick-up required between 8 AM and 4 PM.',
-      co2Saved: 1.2,
       recyclability: 85,
       sellerId: seller1.id,
     },
