@@ -220,4 +220,3 @@ export const getListings = async (
     next(error);
   }
 };
-

@@ -79,7 +79,7 @@ const options: swaggerJsdoc.Options = {
             userType: {
               type: 'string',
               enum: ['seller', 'buyer'],
-              description: 'User role (seller or buyer, case-insensitive)',
+              description: 'User type (seller or buyer, case-insensitive)',
               example: 'seller',
             },
             username: {
@@ -130,7 +130,7 @@ const options: swaggerJsdoc.Options = {
                 email: {
                   type: 'string',
                 },
-                role: {
+                userType: {
                   type: 'string',
                   enum: ['seller', 'buyer'],
                   example: 'buyer',
@@ -154,10 +154,15 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
-        CreateListingRequest: {
+        ManualListingRequest: {
           type: 'object',
-          required: ['title', 'price', 'createType'],
+          required: ['title', 'description', 'materialType', 'quantity', 'price', 'currency', 'state', 'image'],
           properties: {
+            image: {
+              type: 'string',
+              format: 'binary',
+              description: 'Image of the material',
+            },
             title: {
               type: 'string',
               minLength: 3,
@@ -169,35 +174,16 @@ const options: swaggerJsdoc.Options = {
               maxLength: 1000,
               example: 'Industrial polymer, recyclable',
             },
-            createType: {
-              type: 'string',
-              enum: ['ai', 'manual'],
-              description: 'Creation type: "ai" for AI analysis or "manual" for manual entry',
-              example: 'ai',
-            },
             materialType: {
               type: 'string',
               enum: ['WOOD', 'METAL', 'PLASTIC', 'GLASS', 'CARDBOARD', 'BIODEGRADABLE'],
-              description: 'Required for manual creation, optional for AI',
               example: 'PLASTIC',
             },
             quantity: {
               type: 'number',
               minimum: 0.01,
-              description: 'Optional: Will be set from AI analysis if createType is "ai"',
+              description: 'Weight/quantity of material (in chosen unit)',
               example: 5.0,
-            },
-            weight: {
-              type: 'number',
-              minimum: 0.01,
-              description: 'Required for manual creation',
-              example: 50,
-            },
-            material: {
-              type: 'string',
-              maxLength: 100,
-              description: 'Required for manual creation',
-              example: 'Plastic',
             },
             unit: {
               type: 'string',
@@ -217,32 +203,86 @@ const options: swaggerJsdoc.Options = {
               default: 'NGN',
               example: 'NGN',
             },
-            latitude: {
-              type: 'number',
-              minimum: -90,
-              maximum: 90,
-              example: 6.5244,
-            },
-            longitude: {
-              type: 'number',
-              minimum: -180,
-              maximum: 180,
-              example: 3.3792,
+            state: {
+              type: 'string',
+              maxLength: 100,
+              example: 'Lagos',
             },
             location: {
               type: 'string',
               maxLength: 200,
               example: 'Lagos, Nigeria',
             },
-            state: {
-              type: 'string',
-              maxLength: 100,
-              example: 'lagos',
-            },
             notes: {
               type: 'string',
               maxLength: 1000,
               example: 'Material is sorted and baled',
+            },
+            carbonFootprint: {
+              type: 'number',
+              description: 'Optional manually provided carbon footprint figure',
+              example: 10.5,
+            },
+          },
+        },
+        AIListingRequest: {
+          type: 'object',
+          required: ['title', 'price', 'image'],
+          properties: {
+            image: {
+              type: 'string',
+              format: 'binary',
+              description: 'Image of the material',
+            },
+            title: {
+              type: 'string',
+              minLength: 3,
+              maxLength: 200,
+              example: 'Waste bale for AI analysis',
+            },
+            description: {
+              type: 'string',
+              maxLength: 1000,
+              example: 'Mixed recyclable materials',
+            },
+            price: {
+              type: 'number',
+              minimum: 0,
+              example: 120000,
+            },
+            currency: {
+              type: 'string',
+              minLength: 3,
+              maxLength: 3,
+              default: 'NGN',
+              example: 'NGN',
+            },
+            state: {
+              type: 'string',
+              maxLength: 100,
+              example: 'Lagos',
+            },
+            location: {
+              type: 'string',
+              maxLength: 200,
+              example: 'Ikeja, Lagos, Nigeria',
+            },
+            notes: {
+              type: 'string',
+              maxLength: 1000,
+              example: 'Capture from loading bay camera',
+            },
+          },
+        },
+        AIListingResponse: {
+          type: 'object',
+          properties: {
+            message: {
+              type: 'string',
+              example: 'AI listing created successfully',
+            },
+            listing: {
+              $ref: '#/components/schemas/Listing',
             },
           },
         },
@@ -300,11 +340,6 @@ const options: swaggerJsdoc.Options = {
             },
             recyclability: {
               type: 'number',
-            },
-            createType: {
-              type: 'string',
-              enum: ['ai', 'manual'],
-              example: 'ai',
             },
             detectedItems: {
               type: 'array',

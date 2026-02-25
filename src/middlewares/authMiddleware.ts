@@ -5,6 +5,7 @@ import { JWTPayload } from '../types';
 
 // Extend Express Request to include user
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: JWTPayload;
@@ -43,11 +44,11 @@ export const authorize = (...allowedRoles: string[]) => {
       return;
     }
 
-    // Normalize role to lowercase for comparison
-    const userRole = req.user.role.toLowerCase();
+    // Normalize userType to lowercase for comparison
+    const userType = req.user.userType.toLowerCase();
     const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
 
-    if (!normalizedAllowedRoles.includes(userRole)) {
+    if (!normalizedAllowedRoles.includes(userType)) {
       res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
       return;
     }
@@ -55,4 +56,3 @@ export const authorize = (...allowedRoles: string[]) => {
     next();
   };
 };
-

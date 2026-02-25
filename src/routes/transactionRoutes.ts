@@ -104,7 +104,7 @@ router.post(
  *         schema:
  *           type: string
  *           enum: [buyer, seller]
- *         description: Filter by transaction role (buyer or seller)
+ *         description: Filter by transaction userType (buyer or seller)
  *         example: "buyer"
  *     responses:
  *       200:

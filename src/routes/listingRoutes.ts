@@ -207,30 +207,19 @@ router.get(
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             type: object
- *             required:
- *               - title
- *               - materialType
- *               - weight
- *               - price
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *               materialType:
- *                 type: string
- *                 enum: [METAL, PLASTIC, WOOD, CARDBOARD, GLASS, BIODEGRADABLE]
- *               weight:
- *                 type: number
- *               price:
- *                 type: number
- *               currency:
- *                 type: string
- *               state:
- *                 type: string
+ *             $ref: '#/components/schemas/ManualListingRequest'
+ *           example:
+ *             title: "Grade A Plastic Scrap"
+ *             description: "Industrial polymer, recyclable"
+ *             materialType: "PLASTIC"
+ *             quantity: 5.0
+ *             unit: "tons"
+ *             price: 165000
+ *             currency: "NGN"
+ *             state: "Lagos"
+ *             notes: "Material is sorted and baled"
  *     responses:
  *       201:
  *         description: Listing created successfully
@@ -263,25 +252,19 @@ router.post(
  *       content:
  *         multipart/form-data:
  *           schema:
- *             type: object
- *             required:
- *               - image
- *               - title
- *               - price
- *             properties:
- *               image:
- *                 type: string
- *                 format: binary
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *               price:
- *                 type: number
- *               currency:
- *                 type: string
- *               state:
- *                 type: string
+ *             allOf:
+ *               - $ref: '#/components/schemas/AIListingRequest'
+ *               - type: object
+ *                 properties:
+ *                   image:
+ *                     type: string
+ *                     format: binary
+ *           example:
+ *             title: "Mixed recyclables"
+ *             description: "Captured from conveyor belt camera"
+ *             price: 120000
+ *             currency: "NGN"
+ *             state: "Lagos"
  *     responses:
  *       201:
  *         description: AI listing created successfully
@@ -517,7 +500,7 @@ router.get(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       403:
- *         description: Forbidden - SELLER role required
+ *         description: Forbidden - seller userType required
  *         content:
  *           application/json:
  *             schema:

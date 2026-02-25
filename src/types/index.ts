@@ -1,12 +1,12 @@
-import { UserRole, MaterialType, ListingStatus, TransactionStatus } from '@prisma/client';
+import { UserType, MaterialType, ListingStatus, TransactionStatus } from '@prisma/client';
 
-export { UserRole, MaterialType, ListingStatus, TransactionStatus };
+export { UserType, MaterialType, ListingStatus, TransactionStatus };
 
 
 export interface JWTPayload {
   userId: string;
   email: string;
-  role: UserRole;
+  userType: UserType;
 }
 
 export interface RegisterRequest {

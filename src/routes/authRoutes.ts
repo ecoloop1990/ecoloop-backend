@@ -22,7 +22,7 @@ const router = Router();
  *             email: "john@example.com"
  *             password: "SecurePass123"
  *             confirmPassword: "SecurePass123"
- *             role: "seller"
+ *             userType: "seller"
  *             username: "johndoe"
  *             termsAccepted: true
  *     responses:
@@ -38,7 +38,7 @@ const router = Router();
  *                 id: "123e4567-e89b-12d3-a456-426614174000"
  *                 name: "John Doe"
  *                 email: "john@example.com"
- *                 role: "seller"
+ *                 userType: "seller"
  *                 username: "johndoe"
  *                 createdAt: "2024-01-01T00:00:00.000Z"
  *                 updatedAt: "2024-01-01T00:00:00.000Z"
@@ -135,7 +135,7 @@ const registerValidation = [
  *                 id: "123e4567-e89b-12d3-a456-426614174000"
  *                 name: "John Doe"
  *                 email: "john@example.com"
- *                 role: "seller"
+ *                 userType: "seller"
  *                 username: "johndoe"
  *                 createdAt: "2024-01-01T00:00:00.000Z"
  *                 updatedAt: "2024-01-01T00:00:00.000Z"
