@@ -6,6 +6,7 @@ import { calculateDistance } from '../utils/haversine';
 import { CreateListingRequest, FeedQueryParams } from '../types';
 import logger from '../config/logger';
 import { AIService } from './aiService';
+import { calculateCarbonImpact } from '../utils/carbonCalculator';
 
 class ListingService {
   private readonly aiService = new AIService();
@@ -36,6 +37,9 @@ class ListingService {
       throw new Error('Image is required for manual listing creation');
     }
 
+    const { totalWeight, totalCarbonFootprint } =
+      calculateCarbonImpact(data.materialType as MaterialType, quantity);
+
     // Upload image to S3
     const tempId = `manual-${Date.now()}`;
     const s3Key = s3Service.generateListingImageKey(tempId, imageFile.originalname);
@@ -48,7 +52,7 @@ class ListingService {
       materialType: data.materialType,
       quantity,
       unit: data.unit ?? 'kg',
-      price: data.price,
+      price: Number(data.price),
       currency: data.currency ?? 'NGN',
       imageUrl,
       location: data.location,
@@ -56,8 +60,8 @@ class ListingService {
       notes: data.notes,
       status: ListingStatus.ACTIVE,
       detectedItems: [],
-      totalWeight: quantity,
-      carbonFootprint: data.carbonFootprint,
+      totalWeight: totalWeight,
+      carbonFootprint: totalCarbonFootprint,
     });
   }
 

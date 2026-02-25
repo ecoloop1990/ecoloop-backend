@@ -218,11 +218,11 @@ const options: swaggerJsdoc.Options = {
               maxLength: 1000,
               example: 'Material is sorted and baled',
             },
-            carbonFootprint: {
-              type: 'number',
-              description: 'Optional manually provided carbon footprint figure',
-              example: 10.5,
-            },
+            // carbonFootprint: {
+            //   type: 'number',
+            //   description: 'Optional manually provided carbon footprint figure',
+            //   example: 10.5,
+            // },
           },
         },
         AIListingRequest: {
