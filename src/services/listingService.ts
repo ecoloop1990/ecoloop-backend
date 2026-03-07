@@ -93,7 +93,7 @@ class ListingService {
     const ai = await this.aiService.analyzeImage(imageFile.buffer);
 
     const normalizedDetected = ai.detected_items
-      .map((i) => i.trim().toUpperCase())
+      .map((i) => i.material.trim().toUpperCase())
       .filter((i) => i.length > 0);
 
     // Choose a valid materialType from detected items (enum safety)
@@ -109,7 +109,7 @@ class ListingService {
       title: data.title,
       description: data.description,
       materialType: firstDetectedMaterial as MaterialType,
-      quantity: normalizedDetected.length,
+      quantity: ai.detected_items.length,
       unit: data.unit ?? 'kg',
       price: data.price,
       currency: data.currency ?? 'NGN',

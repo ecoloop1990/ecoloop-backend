@@ -2,8 +2,16 @@ import axios from 'axios';
 import FormData from 'form-data';
 import logger from '../config/logger';
 
+export interface DetectedItem {
+  name: string;
+  material: string;
+  confidence: number;
+  weight: number;
+  carbon_footprint: number;
+}
+
 export interface AIResponse {
-  detected_items: string[];
+  detected_items: DetectedItem[];
   total_weight: number;
   total_carbon_footprint: number;
 }
@@ -29,7 +37,18 @@ export class AIService {
 
       return response.data;
     } catch (error) {
-      logger.error({ err: error, aiUrl: this.aiUrl }, 'AI service error');
+      logger.error('AI service error:', error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('AI analysis timed out');
+        }
+
+        if (error.response) {
+          throw new Error(`AI service error: ${error.response.status}`);
+        }
+      }
+
       throw new Error('AI analysis failed. Please try again.');
     }
   }

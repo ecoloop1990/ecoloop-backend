@@ -42,5 +42,7 @@ coverage/
 
 #md files
 API_OBJECT_KEYS.md
-env.examples
+env.example
 PROJECT_STRUCTURE.md
+MIGRATION_GUIDE.md
+DATABASE_FIX.md
