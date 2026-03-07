@@ -5,7 +5,6 @@ import logger from '../config/logger';
 export interface DetectedItem {
   name: string;
   material: string;
-  confidence: number;
   weight: number;
   carbon_footprint: number;
 }

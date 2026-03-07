@@ -111,7 +111,7 @@ class ListingService {
       materialType: firstDetectedMaterial as MaterialType,
       quantity: ai.detected_items.length,
       unit: data.unit ?? 'kg',
-      price: data.price,
+      price: Number(data.price),
       currency: data.currency ?? 'NGN',
       imageUrl,
       location: data.location,
