@@ -44,6 +44,7 @@ model User {
   name      String
   email     String   @unique
   password  String
+  phoneNumber String?
   userType  UserType @default(buyer)
   username  String?  @unique
   createdAt DateTime @default(now())

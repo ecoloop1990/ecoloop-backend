@@ -18,6 +18,7 @@ async function main() {
       password: hashedPassword,
       userType: 'seller' as UserType,
       username: 'greensteel',
+      phoneNumber: '+2348011111111',
     },
   });
 
@@ -30,6 +31,7 @@ async function main() {
       password: hashedPassword,
       userType: 'seller' as UserType,
       username: 'alexrivera',
+      phoneNumber: '+2348022222222',
     },
   });
 
@@ -42,6 +44,7 @@ async function main() {
       password: hashedPassword,
       userType: 'buyer' as UserType,
       username: 'recyclepro',
+      phoneNumber: '+2348033333333',
     },
   });
 

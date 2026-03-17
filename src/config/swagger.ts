@@ -53,7 +53,7 @@ const options: swaggerJsdoc.Options = {
         },
         RegisterRequest: {
           type: 'object',
-          required: ['name', 'email', 'password', 'confirmPassword', 'userType', 'termsAccepted'],
+          required: ['name', 'email', 'password', 'confirmPassword', 'userType', 'phoneNumber', 'termsAccepted'],
           properties: {
             name: {
               type: 'string',
@@ -65,6 +65,11 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               format: 'email',
               example: 'john@example.com',
+            },
+            phoneNumber: {
+              type: 'string',
+              description: 'User phone number in international format',
+              example: '+2348012345678',
             },
             password: {
               type: 'string',
@@ -128,6 +133,9 @@ const options: swaggerJsdoc.Options = {
                   type: 'string',
                 },
                 email: {
+                  type: 'string',
+                },
+                phoneNumber: {
                   type: 'string',
                 },
                 userType: {
@@ -376,6 +384,9 @@ const options: swaggerJsdoc.Options = {
                 email: {
                   type: 'string',
                 },
+                phoneNumber: {
+                  type: 'string',
+                },
                 username: {
                   type: 'string',
                 },
@@ -496,6 +507,9 @@ const options: swaggerJsdoc.Options = {
                 email: {
                   type: 'string',
                 },
+                phoneNumber: {
+                  type: 'string',
+                },
                 username: {
                   type: 'string',
                 },
@@ -512,6 +526,9 @@ const options: swaggerJsdoc.Options = {
                   type: 'string',
                 },
                 email: {
+                  type: 'string',
+                },
+                phoneNumber: {
                   type: 'string',
                 },
                 username: {
