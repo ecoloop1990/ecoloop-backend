@@ -50,6 +50,7 @@ class AuthService {
       password: hashedPassword,
       userType: userType as UserType,
       username: data.username,
+      phoneNumber: data.phoneNumber,
     });
 
     // Generate JWT token

@@ -16,6 +16,7 @@ export interface RegisterRequest {
   confirmPassword: string;
   userType?: 'seller' | 'buyer';
   username?: string;
+  phoneNumber: string;
   termsAccepted: boolean;
 }
 

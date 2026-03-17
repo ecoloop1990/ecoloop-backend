@@ -20,6 +20,7 @@ const router = Router();
  *           example:
  *             name: "John Doe"
  *             email: "john@example.com"
+ *             phoneNumber: "+2348012345678"
  *             password: "SecurePass123"
  *             confirmPassword: "SecurePass123"
  *             userType: "seller"
@@ -38,6 +39,7 @@ const router = Router();
  *                 id: "123e4567-e89b-12d3-a456-426614174000"
  *                 name: "John Doe"
  *                 email: "john@example.com"
+ *                 phoneNumber: "+2348012345678"
  *                 userType: "seller"
  *                 username: "johndoe"
  *                 createdAt: "2024-01-01T00:00:00.000Z"
@@ -69,6 +71,14 @@ const registerValidation = [
     .isEmail()
     .withMessage('Invalid email format')
     .normalizeEmail(),
+  body('phoneNumber')
+    .trim()
+    .notEmpty()
+    .withMessage('Phone number is required')
+    .matches(/^[0-9+()\-\s]{7,20}$/)
+    .withMessage(
+      'Phone number must be between 7 and 20 characters and contain only digits, spaces, parentheses, plus and hyphen'
+    ),
   body('password')
     .notEmpty()
     .withMessage('Password is required')
@@ -135,6 +145,7 @@ const registerValidation = [
  *                 id: "123e4567-e89b-12d3-a456-426614174000"
  *                 name: "John Doe"
  *                 email: "john@example.com"
+ *                 phoneNumber: "+2348012345678"
  *                 userType: "seller"
  *                 username: "johndoe"
  *                 createdAt: "2024-01-01T00:00:00.000Z"

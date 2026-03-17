@@ -7,6 +7,7 @@ export interface CreateUserData {
   password: string;
   userType?: UserType;
   username?: string;
+  phoneNumber?: string;
 }
 
 class UserRepository {
@@ -32,6 +33,7 @@ class UserRepository {
         password: true,
         userType: true,
         username: true,
+        phoneNumber: true,
         createdAt: true,
         updatedAt: true,
       },
