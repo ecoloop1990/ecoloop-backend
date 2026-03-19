@@ -1,4 +1,4 @@
-import { Listing, ListingStatus, MaterialType, Prisma } from '@prisma/client';
+import { Listing, ListingStatus, MaterialType, Prisma} from '@prisma/client';
 import listingRepository from '../repositories/listingRepository';
 import s3Service from '../integrations/s3';
 import { calculateRankingScores, sortByRankingScore } from '../utils/ranking';
@@ -7,6 +7,7 @@ import { CreateListingRequest, FeedQueryParams } from '../types';
 import logger from '../config/logger';
 import { AIService } from './aiService';
 import { calculateCarbonImpact } from '../utils/carbonCalculator';
+import { CreateType } from '../types';
 
 class ListingService {
   private readonly aiService = new AIService();
@@ -59,6 +60,7 @@ class ListingService {
       state: data.state,
       notes: data.notes,
       status: ListingStatus.ACTIVE,
+      createType: 'manual',
       detectedItems: [],
       totalWeight: totalWeight,
       carbonFootprint: totalCarbonFootprint,
@@ -118,6 +120,7 @@ class ListingService {
       state: data.state,
       notes: data.notes,
       status: ListingStatus.ACTIVE,
+      createType: 'ai',
       detectedItems: normalizedDetected,
       totalWeight: ai.total_weight,
       carbonFootprint: ai.total_carbon_footprint,
@@ -144,6 +147,7 @@ class ListingService {
     state?: string;
     notes?: string;
     status: ListingStatus;
+    createType: CreateType;
     detectedItems: string[];
     totalWeight: number;
     carbonFootprint?: number;
@@ -163,6 +167,7 @@ class ListingService {
       state: params.state,
       notes: params.notes,
       status: params.status,
+      createType: params.createType,
       detectedItems: params.detectedItems,
       totalWeight: params.totalWeight,
       carbonFootprint: params.carbonFootprint,
