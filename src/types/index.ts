@@ -20,6 +20,8 @@ export interface RegisterRequest {
   termsAccepted: boolean;
 }
 
+export type CreateType = 'manual' | 'ai';
+
 export interface LoginRequest {
   email: string;
   password: string;

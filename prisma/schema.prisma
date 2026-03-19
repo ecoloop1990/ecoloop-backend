@@ -8,6 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserType {
@@ -59,6 +60,8 @@ model User {
   @@index([userType])
 }
 
+
+
 model Listing {
   id          String        @id @default(uuid())
   sellerId    String
@@ -78,7 +81,7 @@ model Listing {
   notes       String?
   co2Saved    Float?
   recyclability Float?
-  createType  String?       @default("manual")
+  createType String @default("manual")
   detectedItems String[]
   totalWeight   Float?
   carbonFootprint Float?
