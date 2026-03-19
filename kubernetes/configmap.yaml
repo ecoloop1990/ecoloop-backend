@@ -1,24 +1,35 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ecoloop-config
-  namespace: ecoloop
-
+  name: backend-config
+  namespace: default
 data:
   NODE_ENV: "production"
   PORT: "5000"
   API_VERSION: "v1"
 
-  AWS_REGION: "us-east-1"
-  S3_BUCKET_NAME: "ecoloop-s3-buckets"
+  # Non-secret URLs/domains are safe in ConfigMaps. Avoid localhost in EKS.
+  BASE_URL: "https://api.ecoloop.example"
+  FRONTEND_URL: "https://app.ecoloop.example"
+  CORS_ORIGIN: "https://app.ecoloop.example"
 
-  AI_SERVICE_URL: "http://ecoloop-ai-service"
+  AWS_REGION: "us-east-2"
+  S3_BUCKET_NAME: "<S3_BUCKET_NAME>"
+
+  # Use in-cluster DNS if AI service is deployed in the cluster
+  # Example: http://ecoloop-ai.default.svc.cluster.local:8000
+  AI_SERVICE_URL: "http://ecoloop-ai.default.svc.cluster.local:8000"
   AI_SERVICE_TIMEOUT: "3000"
-
-  FRONTEND_URL: "https://ecoloop-frontend-dab6.onrender.com"
-  CORS_ORIGIN: "https://ecoloop-frontend-dab6.onrender.com"
 
   LOG_LEVEL: "info"
 
   RATE_LIMIT_WINDOW_MS: "900000"
   RATE_LIMIT_MAX_REQUESTS: "100"
+
+  # Terraform outputs / secrets references (non-sensitive identifiers)
+  RDS_ENDPOINT: "<RDS_ENDPOINT>"
+  DB_NAME: "ecoloop"
+  DB_PORT: "5432"
+  DB_SSLMODE: "require"
+  DB_SECRET_ARN: "<DB_SECRET_ARN>"
+  APP_CORE_SECRET_ARN: "<APP_CORE_SECRET_ARN>"

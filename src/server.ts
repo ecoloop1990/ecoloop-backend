@@ -1,125 +1,136 @@
-import express, { Express } from 'express';
-import helmet from 'helmet';
-import cors from 'cors';
-import rateLimit from 'express-rate-limit';
-import swaggerUi from 'swagger-ui-express';
-import { env } from './config/env';
-import logger from './config/logger';
-import routes from './routes';
-import swaggerSpec from './config/swagger';
-import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
+async function startServer(): Promise<void> {
+  const { loadRuntimeSecrets } = await import('./config/runtimeSecrets');
+  await loadRuntimeSecrets();
 
-const app: Express = express();
+  const expressModule = await import('express');
+  const express = expressModule.default;
+  const helmet = (await import('helmet')).default;
+  const cors = (await import('cors')).default;
+  const rateLimit = (await import('express-rate-limit')).default;
+  const swaggerUi = (await import('swagger-ui-express')).default;
 
-// Security middleware
-app.use(helmet());
+  const { env } = await import('./config/env');
+  const logger = (await import('./config/logger')).default;
+  const routes = (await import('./routes')).default;
+  const swaggerSpec = (await import('./config/swagger')).default;
+  const { errorHandler, notFoundHandler } = await import('./middlewares/errorHandler');
 
-// CORS configuration
-app.use(
-  cors({
-    origin: env.CORS_ORIGIN,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
-  })
-);
+  const app = express();
 
-// Handle preflight requests
-app.options('*', cors());
+  // Security middleware
+  app.use(helmet());
 
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: env.RATE_LIMIT_WINDOW_MS,
-  max: env.RATE_LIMIT_MAX_REQUESTS,
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use('/api', limiter);
-
-// Request logging middleware
-app.use((req, _res, next) => {
-  logger.info(
-    {
-      method: req.method,
-      path: req.path,
-      ip: req.ip,
-    },
-    'Incoming request'
+  // CORS configuration
+  app.use(
+    cors({
+      origin: env.CORS_ORIGIN,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+      optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+    })
   );
-  next();
-});
 
-// Health check endpoint
-app.get('/health', (_req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
+  // Handle preflight requests
+  app.options('*', cors());
+
+  // Body parsing middleware
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // Rate limiting
+  const limiter = rateLimit({
+    windowMs: env.RATE_LIMIT_WINDOW_MS,
+    max: env.RATE_LIMIT_MAX_REQUESTS,
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
   });
-});
 
-// Swagger documentation (only in development or if explicitly enabled)
-if (env.NODE_ENV === 'development' || process.env.ENABLE_SWAGGER === 'true') {
-  // Avoid stale Swagger UI/spec in browsers/proxies
-  app.use('/api/docs', (_req, res, next) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+  app.use('/api', limiter);
+
+  // Request logging middleware
+  app.use((req, _res, next) => {
+    logger.info(
+      {
+        method: req.method,
+        path: req.path,
+        ip: req.ip,
+      },
+      'Incoming request'
+    );
     next();
   });
 
-  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'EcoLoop API Documentation',
-  }));
-  logger.info('Swagger UI available at /api/docs');
+  // Health check endpoint
+  app.get('/health', (_req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  });
+
+  // Swagger documentation (only in development or if explicitly enabled)
+  if (env.NODE_ENV === 'development' || process.env.ENABLE_SWAGGER === 'true') {
+    // Avoid stale Swagger UI/spec in browsers/proxies
+    app.use('/api/docs', (_req, res, next) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      next();
+    });
+
+    app.use(
+      '/api/docs',
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerSpec, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'EcoLoop API Documentation',
+      })
+    );
+    logger.info('Swagger UI available at /api/docs');
+  }
+
+  // API routes
+  app.use(`/api/${env.API_VERSION}`, routes);
+
+  // Fallback route for unmatched paths
+  app.use('*', (_req, res) => {
+    res.status(404).json({ message: 'Route not found' });
+  });
+
+  // 404 handler
+  app.use(notFoundHandler);
+
+  // Error handler (must be last)
+  app.use(errorHandler);
+
+  // Start server
+  const PORT = process.env.PORT || env.PORT || 5000;
+
+  app.listen(PORT, () => {
+    logger.info(
+      {
+        port: PORT,
+        environment: env.NODE_ENV,
+        apiVersion: env.API_VERSION,
+      },
+      'Server started successfully'
+    );
+  });
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received, shutting down gracefully');
+    process.exit(0);
+  });
+
+  process.on('SIGINT', () => {
+    logger.info('SIGINT received, shutting down gracefully');
+    process.exit(0);
+  });
 }
 
-// API routes
-app.use(`/api/${env.API_VERSION}`, routes);
-
-// Fallback route for unmatched paths
-app.use('*', (_req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
-
-// 404 handler
-app.use(notFoundHandler);
-
-// Error handler (must be last)
-app.use(errorHandler);
-
-// Start server
-const PORT = process.env.PORT || env.PORT || 5000;
-
-app.listen(PORT, () => {
-  logger.info(
-    {
-      port: PORT,
-      environment: env.NODE_ENV,
-      apiVersion: env.API_VERSION,
-    },
-    'Server started successfully'
-  );
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  process.exit(0);
-});
-
-export default app;
+void startServer();
 

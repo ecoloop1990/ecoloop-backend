@@ -2,14 +2,17 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [feature/ai]
   pull_request:
-    branches: [main]
+    branches: [feature/ai]
 
 jobs:
   ci:
     name: CI (Lint, Test, Build, Docker)
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     env:
       NODE_ENV: test
@@ -38,21 +41,20 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-      - name: Configure AWS credentials
-        if: github.ref == 'refs/heads/main'
+      - name: Configure AWS credentials (GitHub OIDC)
+        if: github.ref == 'refs/heads/feature/ai'
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/feature/ai'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/feature/ai'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
@@ -62,22 +64,26 @@ jobs:
           echo "Building image $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
   deploy:
     name: Deploy to Kubernetes
     needs: ci
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/feature/ai'
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials (GitHub OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Set up kubectl
@@ -85,11 +91,14 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Configure kubeconfig
-        env:
-          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+      - name: Configure kubeconfig (EKS)
         run: |
-          echo "$KUBECONFIG_DATA" | base64 -d > $HOME/.kube/config
+          aws eks update-kubeconfig \
+            --name "${{ secrets.EKS_CLUSTER_NAME }}" \
+            --region "${{ secrets.AWS_REGION }}"
+
+      - name: Apply Kubernetes manifests
+        run: kubectl apply -f kubernetes/
 
       - name: Update Kubernetes deployment image
         env:
@@ -101,8 +110,7 @@ jobs:
           IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "Deploying image $IMAGE"
 
-          # Example: update deployment image (adjust names to your cluster)
-          kubectl set image deployment/ecoloop-backend ecoloop-backend=$IMAGE --record
+          kubectl set image deployment/ecoloop-backend backend=$IMAGE
 
           echo "Waiting for rollout..."
           kubectl rollout status deployment/ecoloop-backend

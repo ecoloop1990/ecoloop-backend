@@ -14,54 +14,110 @@ spec:
       labels:
         app: ecoloop-backend
     spec:
+      serviceAccountName: ecoloop-backend
       containers:
-      - name: ecoloop-backend
-        image: ecoloop-backend:latest
+      - name: backend
+        image: "<BACKEND_ECR_URL>:<IMAGE_TAG>"
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
           name: http
         env:
         - name: NODE_ENV
-          value: "production"
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: NODE_ENV
         - name: PORT
-          value: "5000"
-        - name: DATABASE_URL
           valueFrom:
-            secretKeyRef:
-              name: ecoloop-secrets
-              key: database-url
-        - name: JWT_SECRET
+            configMapKeyRef:
+              name: backend-config
+              key: PORT
+        - name: API_VERSION
           valueFrom:
-            secretKeyRef:
-              name: ecoloop-secrets
-              key: jwt-secret
-        - name: AWS_ACCESS_KEY_ID
+            configMapKeyRef:
+              name: backend-config
+              key: API_VERSION
+        - name: BASE_URL
           valueFrom:
-            secretKeyRef:
-              name: ecoloop-secrets
-              key: aws-access-key-id
-        - name: AWS_SECRET_ACCESS_KEY
+            configMapKeyRef:
+              name: backend-config
+              key: BASE_URL
+        - name: AWS_REGION
           valueFrom:
-            secretKeyRef:
-              name: ecoloop-secrets
-              key: aws-secret-access-key
+            configMapKeyRef:
+              name: backend-config
+              key: AWS_REGION
         - name: S3_BUCKET_NAME
-          value: "ecoloop-images"
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: S3_BUCKET_NAME
         - name: AI_SERVICE_URL
           valueFrom:
             configMapKeyRef:
-              name: ecoloop-config
-              key: ai-service-url
+              name: backend-config
+              key: AI_SERVICE_URL
         - name: AI_SERVICE_TIMEOUT
-          value: "3000"
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: AI_SERVICE_TIMEOUT
         - name: LOG_LEVEL
-          value: "info"
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: LOG_LEVEL
         - name: CORS_ORIGIN
           valueFrom:
             configMapKeyRef:
-              name: ecoloop-config
-              key: cors-origin
+              name: backend-config
+              key: CORS_ORIGIN
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: FRONTEND_URL
+        - name: RATE_LIMIT_WINDOW_MS
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: RATE_LIMIT_WINDOW_MS
+        - name: RATE_LIMIT_MAX_REQUESTS
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: RATE_LIMIT_MAX_REQUESTS
+        - name: DB_SECRET_ARN
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_SECRET_ARN
+        - name: APP_CORE_SECRET_ARN
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: APP_CORE_SECRET_ARN
+        - name: RDS_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: RDS_ENDPOINT
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_NAME
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_PORT
+        - name: DB_SSLMODE
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_SSLMODE
         livenessProbe:
           httpGet:
             path: /health
@@ -85,17 +141,3 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: ecoloop-backend-service
-spec:
-  selector:
-    app: ecoloop-backend
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 5000
-  type: LoadBalancer
-

@@ -11,8 +11,6 @@ interface EnvConfig {
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
   AWS_REGION: string;
-  AWS_ACCESS_KEY_ID: string;
-  AWS_SECRET_ACCESS_KEY: string;
   S3_BUCKET_NAME: string;
   AI_SERVICE_URL: string;
   AI_SERVICE_TIMEOUT: number;
@@ -45,8 +43,6 @@ export const env: EnvConfig = {
   JWT_SECRET: getEnvVar('JWT_SECRET'),
   JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN', '7d'),
   AWS_REGION: getEnvVar('AWS_REGION', 'us-east-1'),
-  AWS_ACCESS_KEY_ID: getEnvVar('AWS_ACCESS_KEY_ID'),
-  AWS_SECRET_ACCESS_KEY: getEnvVar('AWS_SECRET_ACCESS_KEY'),
   S3_BUCKET_NAME: getEnvVar('S3_BUCKET_NAME'),
   AI_SERVICE_URL: getEnvVar('AI_SERVICE_URL', 'http://127.0.0.1:8000'),
   AI_SERVICE_TIMEOUT: getEnvNumber('AI_SERVICE_TIMEOUT', 3000),
