@@ -15,13 +15,25 @@ const app: Express = express();
 app.use(helmet());
 
 // CORS configuration
+const allowedOrigins = env.CORS_ORIGIN
+  ? env.CORS_ORIGIN.split(',')
+  : [];
+
 app.use(
   cors({
-    origin: env.CORS_ORIGIN || '*',
+    origin: function (origin, callback) {
+      // allow requests with no origin (like Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
-    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
   })
 );
 
