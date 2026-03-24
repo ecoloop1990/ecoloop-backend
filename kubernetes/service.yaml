@@ -6,7 +6,7 @@ metadata:
   labels:
     app: ecoloop-backend
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: ecoloop-backend
   ports:

@@ -1,7 +1,3 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
 interface EnvConfig {
   NODE_ENV: string;
   PORT: number;
@@ -19,37 +15,48 @@ interface EnvConfig {
   FRONTEND_URL: string;
   RATE_LIMIT_WINDOW_MS: number;
   RATE_LIMIT_MAX_REQUESTS: number;
+  RDS_ENDPOINT: string;
 }
 
-const getEnvVar = (key: string, defaultValue?: string): string => {
-  const value = process.env[key] || defaultValue;
+const getEnvVar = (key: string): string => {
+  const value = process.env[key];
   if (!value) {
     throw new Error(`Missing required environment variable: ${key}`);
   }
   return value;
 };
 
-const getEnvNumber = (key: string, defaultValue: number): number => {
+const getEnvNumber = (key: string): number => {
   const value = process.env[key];
-  return value ? parseInt(value, 10) : defaultValue;
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+
+  const parsed = parseInt(value, 10);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Invalid numeric environment variable: ${key}`);
+  }
+
+  return parsed;
 };
 
 export const env: EnvConfig = {
-  NODE_ENV: getEnvVar('NODE_ENV', 'development'),
-  PORT: getEnvNumber('PORT', 5000),
-  API_VERSION: getEnvVar('API_VERSION', 'v1'),
-  BASE_URL: getEnvVar('BASE_URL', 'http://localhost:5000'),
+  NODE_ENV: getEnvVar('NODE_ENV'),
+  PORT: getEnvNumber('PORT'),
+  API_VERSION: getEnvVar('API_VERSION'),
+  BASE_URL: getEnvVar('BASE_URL'),
   DATABASE_URL: getEnvVar('DATABASE_URL'),
   JWT_SECRET: getEnvVar('JWT_SECRET'),
-  JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN', '7d'),
-  AWS_REGION: getEnvVar('AWS_REGION', 'us-east-1'),
+  JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN'),
+  AWS_REGION: getEnvVar('AWS_REGION'),
   S3_BUCKET_NAME: getEnvVar('S3_BUCKET_NAME'),
-  AI_SERVICE_URL: getEnvVar('AI_SERVICE_URL', 'http://127.0.0.1:8000'),
-  AI_SERVICE_TIMEOUT: getEnvNumber('AI_SERVICE_TIMEOUT', 3000),
-  LOG_LEVEL: getEnvVar('LOG_LEVEL', 'info'),
-  CORS_ORIGIN: getEnvVar('CORS_ORIGIN', 'http://localhost:3000'),
-  FRONTEND_URL: getEnvVar('FRONTEND_URL', 'http://localhost:3000'),
-  RATE_LIMIT_WINDOW_MS: getEnvNumber('RATE_LIMIT_WINDOW_MS', 900000),
-  RATE_LIMIT_MAX_REQUESTS: getEnvNumber('RATE_LIMIT_MAX_REQUESTS', 100),
+  AI_SERVICE_URL: getEnvVar('AI_SERVICE_URL'),
+  AI_SERVICE_TIMEOUT: getEnvNumber('AI_SERVICE_TIMEOUT'),
+  LOG_LEVEL: getEnvVar('LOG_LEVEL'),
+  CORS_ORIGIN: getEnvVar('CORS_ORIGIN'),
+  FRONTEND_URL: getEnvVar('FRONTEND_URL'),
+  RATE_LIMIT_WINDOW_MS: getEnvNumber('RATE_LIMIT_WINDOW_MS'),
+  RATE_LIMIT_MAX_REQUESTS: getEnvNumber('RATE_LIMIT_MAX_REQUESTS'),
+  RDS_ENDPOINT: getEnvVar('RDS_ENDPOINT'),
 };
 

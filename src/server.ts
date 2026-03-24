@@ -1,7 +1,4 @@
 async function startServer(): Promise<void> {
-  const { loadRuntimeSecrets } = await import('./config/runtimeSecrets');
-  await loadRuntimeSecrets();
-
   const expressModule = await import('express');
   const express = expressModule.default;
   const helmet = (await import('helmet')).default;
