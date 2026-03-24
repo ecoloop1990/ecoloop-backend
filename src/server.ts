@@ -17,16 +17,16 @@ async function startServer(): Promise<void> {
   // Security middleware
   app.use(helmet());
 
-  // CORS configuration
-  app.use(
-    cors({
-      origin: env.CORS_ORIGIN,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true,
-      optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
-    })
-  );
+// CORS configuration
+app.use(
+  cors({
+    origin: env.CORS_ORIGIN,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  })
+);
 
   // Handle preflight requests
   app.options('*', cors());
