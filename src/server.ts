@@ -22,12 +22,14 @@ const allowedOrigins = env.CORS_ORIGIN
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (like Postman)
+      console.log('Incoming origin:', origin); 
+    
       if (!origin) return callback(null, true);
-
+    
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       } else {
+        console.log('Blocked by CORS:', origin);
         return callback(new Error('Not allowed by CORS'));
       }
     },
@@ -38,7 +40,10 @@ app.use(
 );
 
 // Handle preflight requests
-app.options('*', cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
