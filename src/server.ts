@@ -19,22 +19,31 @@ const allowedOrigins = env.CORS_ORIGIN
   ? env.CORS_ORIGIN.split(',')
   : [];
 
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       console.log('Incoming origin:', origin); 
+    
+//       if (!origin) return callback(null, true);
+    
+//       if (allowedOrigins.includes(origin)) {
+//         return callback(null, true);
+//       } else {
+//         console.log('Blocked by CORS:', origin);
+//         return callback(new Error('Not allowed by CORS'));
+//       }
+//     },
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//     allowedHeaders: ['Content-Type', 'Authorization'],
+//     credentials: true,
+//   })
+// );
+
 app.use(
   cors({
-    origin: function (origin, callback) {
-      console.log('Incoming origin:', origin); 
-    
-      if (!origin) return callback(null, true);
-    
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        console.log('Blocked by CORS:', origin);
-        return callback(new Error('Not allowed by CORS'));
-      }
+    origin: (_origin, callback) => {
+      callback(null, true); 
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   })
 );
