@@ -11,13 +11,11 @@ import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 
 const app: Express = express();
 
-// Security middleware
-app.use(helmet());
 
 // CORS configuration
-const allowedOrigins = env.CORS_ORIGIN
-  ? env.CORS_ORIGIN.split(',')
-  : [];
+// const allowedOrigins = env.CORS_ORIGIN
+//   ? env.CORS_ORIGIN.split(',')
+//   : [];
 
 // app.use(
 //   cors({
@@ -39,20 +37,17 @@ const allowedOrigins = env.CORS_ORIGIN
 //   })
 // );
 
-app.use(
-  cors({
-    origin: (_origin, callback) => {
-      callback(null, true); 
-    },
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: (_origin, callback) => callback(null, true),
+  credentials: true,
+}));
 
 // Handle preflight requests
-// app.use(cors({
-//   origin: true,
-//   credentials: true,
-// }));
+app.options('*', cors());
+
+// Security middleware
+app.use(helmet());
+
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -118,6 +113,8 @@ app.use('*', (_req, res) => {
 
 // 404 handler
 app.use(notFoundHandler);
+
+
 
 // Error handler (must be last)
 app.use(errorHandler);
