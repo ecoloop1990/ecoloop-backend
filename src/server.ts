@@ -49,10 +49,10 @@ app.use(
 );
 
 // Handle preflight requests
-app.use(cors({
-  origin: true,
-  credentials: true,
-}));
+// app.use(cors({
+//   origin: true,
+//   credentials: true,
+// }));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
