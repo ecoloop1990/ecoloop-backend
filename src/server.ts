@@ -18,9 +18,9 @@ async function startServer(): Promise<void> {
   app.use(helmet());
 
 // CORS configuration
-const allowedOrigins = env.CORS_ORIGIN
-  ? env.CORS_ORIGIN.split(',')
-  : [];
+// const allowedOrigins = env.CORS_ORIGIN
+//   ? env.CORS_ORIGIN.split(',')
+//   : [];
 
 // app.use(
 //   cors({
@@ -42,14 +42,10 @@ const allowedOrigins = env.CORS_ORIGIN
 //   })
 // );
 
-app.use(
-  cors({
-    origin: (_origin, callback) => {
-      callback(null, true); 
-    },
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: (_origin, callback) => callback(null, true),
+  credentials: true,
+}));
 
 // Handle preflight requests
 app.use(cors({
