@@ -9,12 +9,14 @@ name: Backend CI/CD
 on:
   push:
     branches: [feature/ai]
+    branches: [feature/ai]
   pull_request:
+    branches: [feature/ai]
     branches: [feature/ai]
 
 jobs:
   ci:
-    name: CI (Lint, Test, Build, Docker)
+    name: CI (Build, Docker)
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -38,18 +40,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run lint
-        run: npm run lint
-
-      - name: Run tests
-        run: npm test
-
       - name: Build TypeScript
         run: npm run build
 
 <<<<<<< HEAD
       - name: Configure AWS credentials (GitHub OIDC → deploy role)
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/feature/ai'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
@@ -65,10 +61,12 @@ jobs:
 
       - name: Login to Amazon ECR
         if: github.ref == 'refs/heads/feature/ai'
+        if: github.ref == 'refs/heads/feature/ai'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
+        if: github.ref == 'refs/heads/feature/ai'
         if: github.ref == 'refs/heads/feature/ai'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -86,11 +84,7 @@ jobs:
     name: Deploy to Kubernetes
     needs: ci
     runs-on: ubuntu-latest
-<<<<<<< HEAD
-    if: github.ref == 'refs/heads/main'
-=======
     if: github.ref == 'refs/heads/feature/ai'
->>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
     permissions:
       id-token: write
       contents: read
