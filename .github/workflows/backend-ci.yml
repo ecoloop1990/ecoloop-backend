@@ -9,9 +9,7 @@ name: Backend CI/CD
 on:
   push:
     branches: [feature/ai]
-    branches: [feature/ai]
   pull_request:
-    branches: [feature/ai]
     branches: [feature/ai]
 
 jobs:
@@ -52,12 +50,10 @@ jobs:
 
       - name: Login to Amazon ECR
         if: github.ref == 'refs/heads/feature/ai'
-        if: github.ref == 'refs/heads/feature/ai'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
-        if: github.ref == 'refs/heads/feature/ai'
         if: github.ref == 'refs/heads/feature/ai'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
