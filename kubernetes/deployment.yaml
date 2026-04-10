@@ -27,6 +27,7 @@ spec:
         ports:
         - containerPort: 5000
           name: http
+<<<<<<< HEAD
         envFrom:
         # Order: config first, then secrets — JWT_SECRET / DATABASE_URL override if keys ever overlap
         - configMapRef:
@@ -35,6 +36,104 @@ spec:
             name: backend-config
         - secretRef:
             name: backend-env
+=======
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: PORT
+        - name: API_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: API_VERSION
+        - name: BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: BASE_URL
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: AWS_REGION
+        - name: S3_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: S3_BUCKET_NAME
+        - name: AI_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: AI_SERVICE_URL
+        - name: AI_SERVICE_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: AI_SERVICE_TIMEOUT
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: LOG_LEVEL
+        - name: CORS_ORIGIN
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: CORS_ORIGIN
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: FRONTEND_URL
+        - name: RATE_LIMIT_WINDOW_MS
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: RATE_LIMIT_WINDOW_MS
+        - name: RATE_LIMIT_MAX_REQUESTS
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: RATE_LIMIT_MAX_REQUESTS
+        - name: DB_SECRET_ARN
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_SECRET_ARN
+        - name: APP_CORE_SECRET_ARN
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: APP_CORE_SECRET_ARN
+        - name: RDS_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: RDS_ENDPOINT
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_NAME
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_PORT
+        - name: DB_SSLMODE
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_SSLMODE
+>>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
         livenessProbe:
           httpGet:
             path: /health

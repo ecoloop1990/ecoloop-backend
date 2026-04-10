@@ -8,9 +8,9 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [feature/ai]
   pull_request:
-    branches: [main]
+    branches: [feature/ai]
 
 jobs:
   ci:
@@ -47,20 +47,29 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
+<<<<<<< HEAD
       - name: Configure AWS credentials (GitHub OIDC → deploy role)
         if: github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
+=======
+      - name: Configure AWS credentials (GitHub OIDC)
+        if: github.ref == 'refs/heads/feature/ai'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+>>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
 
       - name: Login to Amazon ECR
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/feature/ai'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/feature/ai'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
@@ -77,7 +86,11 @@ jobs:
     name: Deploy to Kubernetes
     needs: ci
     runs-on: ubuntu-latest
+<<<<<<< HEAD
     if: github.ref == 'refs/heads/main'
+=======
+    if: github.ref == 'refs/heads/feature/ai'
+>>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
     permissions:
       id-token: write
       contents: read
@@ -86,11 +99,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+<<<<<<< HEAD
       - name: Configure AWS credentials (GitHub OIDC → deploy role)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
+=======
+      - name: Configure AWS credentials (GitHub OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+>>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
@@ -100,8 +121,13 @@ jobs:
       - name: Configure kubeconfig (EKS)
         run: |
           aws eks update-kubeconfig \
+<<<<<<< HEAD
             --name "${{ vars.EKS_CLUSTER_NAME }}" \
             --region "${{ vars.AWS_REGION }}"
+=======
+            --name "${{ secrets.EKS_CLUSTER_NAME }}" \
+            --region "${{ secrets.AWS_REGION }}"
+>>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
 
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
