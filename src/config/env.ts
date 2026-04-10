@@ -47,13 +47,8 @@ export const env: EnvConfig = {
   BASE_URL: getEnvVar('BASE_URL'),
   DATABASE_URL: getEnvVar('DATABASE_URL'),
   JWT_SECRET: getEnvVar('JWT_SECRET'),
-<<<<<<< HEAD
   JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN'),
   AWS_REGION: getEnvVar('AWS_REGION'),
-=======
-  JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN', '7d'),
-  AWS_REGION: getEnvVar('AWS_REGION', 'us-east-1'),
->>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
   S3_BUCKET_NAME: getEnvVar('S3_BUCKET_NAME'),
   AI_SERVICE_URL: getEnvVar('AI_SERVICE_URL'),
   AI_SERVICE_TIMEOUT: getEnvNumber('AI_SERVICE_TIMEOUT'),
