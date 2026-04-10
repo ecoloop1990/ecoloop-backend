@@ -6,11 +6,7 @@ metadata:
   labels:
     app: ecoloop-backend
 spec:
-<<<<<<< HEAD
   type: LoadBalancer
-=======
-  type: ClusterIP
->>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
   selector:
     app: ecoloop-backend
   ports:
