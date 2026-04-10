@@ -43,21 +43,12 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-<<<<<<< HEAD
-      - name: Configure AWS credentials (GitHub OIDC → deploy role)
-        if: github.ref == 'refs/heads/feature/ai'
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-=======
       - name: Configure AWS credentials (GitHub OIDC)
         if: github.ref == 'refs/heads/feature/ai'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
->>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
         if: github.ref == 'refs/heads/feature/ai'
@@ -93,19 +84,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-<<<<<<< HEAD
-      - name: Configure AWS credentials (GitHub OIDC → deploy role)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-=======
       - name: Configure AWS credentials (GitHub OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
->>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
@@ -115,13 +98,8 @@ jobs:
       - name: Configure kubeconfig (EKS)
         run: |
           aws eks update-kubeconfig \
-<<<<<<< HEAD
             --name "${{ vars.EKS_CLUSTER_NAME }}" \
             --region "${{ vars.AWS_REGION }}"
-=======
-            --name "${{ secrets.EKS_CLUSTER_NAME }}" \
-            --region "${{ secrets.AWS_REGION }}"
->>>>>>> 9de2022 (Updated the kubernetes manifest and github action pipeline)
 
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
