@@ -97,6 +97,9 @@ jobs:
             --name "${{ vars.EKS_CLUSTER_NAME }}" \
             --region "${{ vars.AWS_REGION }}"
 
+      - name: Debug cluster access
+        run: kubectl get nodes
+
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
 
