@@ -103,6 +103,20 @@ jobs:
           kubectl config current-context
           kubectl get nodes
 
+      - name: Install External Secrets Operator
+        run: |
+          # Install ESO CRDs and controller
+          helm repo add external-secrets https://charts.external-secrets.io
+          helm repo update
+          helm upgrade --install external-secrets external-secrets/external-secrets \
+            --namespace external-secrets \
+            --create-namespace \
+            --set installCRDs=true
+          
+          # Wait for ESO to be ready
+          kubectl wait --for=condition=available --timeout=120s \
+            deployment/external-secrets -n external-secrets
+
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
 
