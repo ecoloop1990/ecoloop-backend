@@ -145,6 +145,27 @@ jobs:
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
 
+      - name: Debug current pod status and secrets
+        run: |
+          echo "=== Current pods before update ==="
+          kubectl get pods -l app=ecoloop-backend
+          
+          echo "=== Check if ExternalSecrets are ready ==="
+          kubectl get externalsecret
+          kubectl describe externalsecret backend-config
+          kubectl describe externalsecret backend-env
+          
+          echo "=== Check if secrets were created ==="
+          kubectl get secret | grep -E "backend-config|backend-env"
+          
+          echo "=== Check ClusterSecretStore status ==="
+          kubectl get clustersecretstore
+          kubectl describe clustersecretstore aws-parameterstore
+          kubectl describe clustersecretstore aws-secretsmanager
+          
+          echo "=== Check pod events ==="
+          kubectl get events --sort-by='.lastTimestamp' | tail -30
+
       - name: Update Kubernetes deployment image
         env:
           ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
