@@ -132,6 +132,23 @@ jobs:
           kubectl get crd | grep external-secrets
           kubectl get pods -n external-secrets
 
+      - name: Annotate ESO service account with IRSA role
+        run: |
+          # Add the IRSA role annotation to ESO's service account
+          kubectl annotate serviceaccount external-secrets -n external-secrets \
+            eks.amazonaws.com/role-arn=${{ secrets.ESO_IRSA_ROLE_ARN }} \
+            --overwrite
+          
+          # Restart ESO pods to pick up the role
+          kubectl rollout restart deployment external-secrets-controller -n external-secrets
+          kubectl rollout restart deployment external-secrets-cert-controller -n external-secrets
+          kubectl rollout restart deployment external-secrets-webhook -n external-secrets
+          
+          # Wait for ESO to be ready
+          kubectl wait --for=condition=available --timeout=120s deployment/external-secrets-controller -n external-secrets
+          
+          echo "ESO service account annotated with IRSA role"
+
       - name: Wait for ESO CRDs
         run: |
           echo "Waiting for ClusterSecretStore CRD..."
