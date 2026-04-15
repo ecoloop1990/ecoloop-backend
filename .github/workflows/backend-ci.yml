@@ -99,7 +99,8 @@ jobs:
 
       - name: Debug cluster access
         run: |
-          kubectl version --short
+          kubectl version --client
+          kubectl config current-context
           kubectl get nodes
 
       - name: Apply Kubernetes manifests
