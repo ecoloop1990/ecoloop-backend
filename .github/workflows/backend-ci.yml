@@ -42,19 +42,16 @@ jobs:
         run: npm run build
 
       - name: Configure AWS credentials (GitHub OIDC)
-        if: github.ref == 'refs/heads/feature/ai'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        if: github.ref == 'refs/heads/feature/ai'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
-        if: github.ref == 'refs/heads/feature/ai'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
@@ -71,7 +68,6 @@ jobs:
     name: Deploy to Kubernetes
     needs: ci
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feature/ai'
     permissions:
       id-token: write
       contents: read
@@ -86,6 +82,9 @@ jobs:
           role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Verify AWS identity (OIDC check)
+        run: aws sts get-caller-identity
+
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
         with:
@@ -93,12 +92,15 @@ jobs:
 
       - name: Configure kubeconfig (EKS)
         run: |
+          mkdir -p $HOME/.kube
           aws eks update-kubeconfig \
             --name "${{ vars.EKS_CLUSTER_NAME }}" \
             --region "${{ vars.AWS_REGION }}"
 
       - name: Debug cluster access
-        run: kubectl get nodes
+        run: |
+          kubectl version --short
+          kubectl get nodes
 
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
