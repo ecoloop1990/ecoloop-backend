@@ -165,6 +165,25 @@ jobs:
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
 
+      - name: Wait for ClusterSecretStores to be ready
+        run: |
+          echo "Waiting for ClusterSecretStores to become ready..."
+          for i in {1..20}; do
+            PARA_READY=$(kubectl get clustersecretstore aws-parameterstore -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
+            SECRET_READY=$(kubectl get clustersecretstore aws-secretsmanager -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
+            
+            if [ "$PARA_READY" = "True" ] && [ "$SECRET_READY" = "True" ]; then
+              echo "✓ ClusterSecretStores are ready!"
+              break
+            fi
+            echo "Attempt $i: ParameterStore=$PARA_READY, SecretsManager=$SECRET_READY"
+            sleep 10
+          done
+          
+          echo "Final ClusterSecretStore status:"
+          kubectl get clustersecretstore
+
+
       - name: Debug current pod status and secrets
         run: |
           echo "=== Current pods before update ==="
@@ -198,5 +217,10 @@ jobs:
 
           kubectl set image deployment/ecoloop-backend backend=$IMAGE
 
-          echo "Waiting for rollout..."
-          kubectl rollout status deployment/ecoloop-backend
+          echo "Waiting for rollout (timeout: 5 minutes)..."
+          kubectl rollout status deployment/ecoloop-backend --timeout=5m || {
+            echo "Rollout failed. Checking pod status..."
+            kubectl get pods -l app=ecoloop-backend
+            kubectl describe pods -l app=ecoloop-backend | grep -A 10 "Events:"
+            exit 1
+          }
