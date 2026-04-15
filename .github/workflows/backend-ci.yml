@@ -103,6 +103,20 @@ jobs:
           kubectl config current-context
           kubectl get nodes
 
+      - name: Debug ESO installation
+        run: |
+          echo "=== Checking Helm releases ==="
+          helm list -n external-secrets
+          
+          echo "=== Checking pods in external-secrets namespace ==="
+          kubectl get pods -n external-secrets || echo "Namespace not found"
+          
+          echo "=== Checking CRDs ==="
+          kubectl get crd | grep external-secrets || echo "No ESO CRDs found"
+          
+          echo "=== Checking API versions ==="
+          kubectl api-versions | grep external-secrets || echo "external-secrets API not available"
+
       - name: Install External Secrets Operator
         run: |
           helm repo add external-secrets https://charts.external-secrets.io
@@ -118,6 +132,15 @@ jobs:
           kubectl get crd | grep external-secrets
           kubectl get pods -n external-secrets
 
+      - name: Wait for ESO CRDs
+            run: |
+              echo "Waiting for ClusterSecretStore CRD..."
+              kubectl wait --for=condition=established --timeout=60s crd/clustersecretstores.external-secrets.io
+              
+              echo "Waiting for ExternalSecret CRD..."
+              kubectl wait --for=condition=established --timeout=60s crd/externalsecrets.external-secrets.io
+              
+              echo "All CRDs are ready!"
 
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
