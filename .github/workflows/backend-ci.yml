@@ -133,14 +133,14 @@ jobs:
           kubectl get pods -n external-secrets
 
       - name: Wait for ESO CRDs
-            run: |
-              echo "Waiting for ClusterSecretStore CRD..."
-              kubectl wait --for=condition=established --timeout=60s crd/clustersecretstores.external-secrets.io
+        run: |
+          echo "Waiting for ClusterSecretStore CRD..."
+          kubectl wait --for=condition=established --timeout=60s crd/clustersecretstores.external-secrets.io
               
-              echo "Waiting for ExternalSecret CRD..."
-              kubectl wait --for=condition=established --timeout=60s crd/externalsecrets.external-secrets.io
+          echo "Waiting for ExternalSecret CRD..."
+          kubectl wait --for=condition=established --timeout=60s crd/externalsecrets.external-secrets.io
               
-              echo "All CRDs are ready!"
+          echo "All CRDs are ready!"
 
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
