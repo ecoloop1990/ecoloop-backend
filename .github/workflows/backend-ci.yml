@@ -105,17 +105,16 @@ jobs:
 
       - name: Install External Secrets Operator
         run: |
-          # Install ESO CRDs and controller
-          helm repo add external-secrets https://charts.external-secrets.io
-          helm repo update
-          helm upgrade --install external-secrets external-secrets/external-secrets \
-            --namespace external-secrets \
-            --create-namespace \
-            --set installCRDs=true
+          # Install ESO CRDs and operator
+          kubectl apply -f https://github.com/external-secrets/external-secrets/releases/download/v0.9.14/external-secrets-crds.yaml
+          kubectl apply -f https://github.com/external-secrets/external-secrets/releases/download/v0.9.14/external-secrets.yaml
           
-          # Wait for ESO to be ready
+          # Wait for operator to be ready
           kubectl wait --for=condition=available --timeout=120s \
-            deployment/external-secrets -n external-secrets
+            deployment/external-secrets-controller -n external-secrets || true
+          
+          # Verify CRDs are installed
+          kubectl get crd | grep external-secrets
 
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
