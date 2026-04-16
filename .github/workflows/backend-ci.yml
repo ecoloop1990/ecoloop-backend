@@ -228,31 +228,30 @@ jobs:
           echo "=== Check pod events ==="
           kubectl get events --sort-by='.lastTimestamp' | tail -30
 
-      - name: Wait for ESO to create backend-config ConfigMap
+      - name: Wait for ESO Secrets to be created
         run: |
-          echo "Waiting for backend-config ConfigMap from ESO..."
+          echo "Waiting for backend-config Secret..."
           for i in {1..30}; do
-            if kubectl get configmap backend-config &>/dev/null; then
-              echo "✓ ConfigMap backend-config created successfully"
-              echo "Contents:"
-              kubectl get configmap backend-config -o jsonpath='{.data}' | python3 -m json.tool 2>/dev/null || echo "Unable to parse"
+            if kubectl get secret backend-config &>/dev/null; then
+              echo "✓ Secret backend-config created"
               break
             fi
-            echo "Attempt $i: ConfigMap backend-config not yet created..."
+            echo "Attempt $i: Waiting for Secret backend-config..."
             sleep 5
           done
           
-          # Verify both ConfigMaps exist
-          echo "=== All ConfigMaps ==="
-          kubectl get configmap
+          echo "Waiting for backend-env Secret..."
+          for i in {1..30}; do
+            if kubectl get secret backend-env &>/dev/null; then
+              echo "✓ Secret backend-env created"
+              break
+            fi
+            echo "Attempt $i: Waiting for Secret backend-env..."
+            sleep 5
+          done
           
-          if ! kubectl get configmap backend-config &>/dev/null; then
-            echo "ERROR: ConfigMap backend-config was not created by ESO"
-            echo "Checking ExternalSecret status..."
-            kubectl describe externalsecret backend-config
-            exit 1
-          fi
-
+          echo "All Secrets are ready!"
+          kubectl get secret backend-config backend-env
       - name: Verify both ConfigMaps and Secret are ready
         run: |
           echo "=== Checking all required resources ==="
