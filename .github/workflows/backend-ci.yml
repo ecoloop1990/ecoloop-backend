@@ -152,6 +152,29 @@ jobs:
           
           echo "ESO successfully configured with IRSA role"
 
+      - name: Debug ESO IRSA thoroughly
+        run: |
+          echo "=== 1. Check ESO service account annotation ==="
+          kubectl get serviceaccount external-secrets -n external-secrets -o yaml | grep -A 2 "annotations:"
+          
+          echo "=== 2. Check if token is mounted in ESO pod ==="
+          ESO_POD=$(kubectl get pods -n external-secrets -o name | head -1)
+          kubectl exec $ESO_POD -n external-secrets -- ls -la /var/run/secrets/eks.amazonaws.com/ 2>/dev/null || echo "❌ TOKEN NOT MOUNTED"
+          
+          echo "=== 3. Check token contents (first 100 chars) ==="
+          kubectl exec $ESO_POD -n external-secrets -- cat /var/run/secrets/eks.amazonaws.com/token 2>/dev/null | head -c 100 || echo "No token"
+          
+          echo "=== 4. Check ESO pod logs for AWS errors ==="
+          kubectl logs $ESO_POD -n external-secrets --tail=50
+          
+          echo "=== 5. Check ClusterSecretStore details ==="
+          kubectl describe clustersecretstore aws-parameterstore | grep -A 20 "Status:"
+          kubectl describe clustersecretstore aws-secretsmanager | grep -A 20 "Status:"
+          
+          echo "=== 6. Check if OIDC provider exists ==="
+          aws eks describe-cluster --name ${{ vars.EKS_CLUSTER_NAME }} --region ${{ vars.AWS_REGION }} --query "cluster.identity.oidc.issuer" --output text
+
+
       - name: Wait for ESO CRDs
         run: |
           echo "Waiting for ClusterSecretStore CRD..."
@@ -224,3 +247,20 @@ jobs:
             kubectl describe pods -l app=ecoloop-backend | grep -A 10 "Events:"
             exit 1
           }
+
+      - name: Debug ConfigMap and Secret
+        run: |
+          echo "=== Check all ConfigMaps in default namespace ==="
+          kubectl get configmap
+          
+          echo "=== Check backend-config specifically ==="
+          kubectl get configmap backend-config -o yaml || echo "ConfigMap not found"
+          
+          echo "=== Check all Secrets in default namespace ==="
+          kubectl get secret
+          
+          echo "=== Check backend-env specifically ==="
+          kubectl get secret backend-env -o yaml || echo "Secret not found"
+          
+          echo "=== Check deployment envFrom references ==="
+          kubectl get deployment ecoloop-backend -o yaml | grep -A 20 "envFrom"
