@@ -228,6 +228,64 @@ jobs:
           echo "=== Check pod events ==="
           kubectl get events --sort-by='.lastTimestamp' | tail -30
 
+      - name: Wait for ESO to create backend-config ConfigMap
+        run: |
+          echo "Waiting for backend-config ConfigMap from ESO..."
+          for i in {1..30}; do
+            if kubectl get configmap backend-config &>/dev/null; then
+              echo "✓ ConfigMap backend-config created successfully"
+              echo "Contents:"
+              kubectl get configmap backend-config -o jsonpath='{.data}' | python3 -m json.tool 2>/dev/null || echo "Unable to parse"
+              break
+            fi
+            echo "Attempt $i: ConfigMap backend-config not yet created..."
+            sleep 5
+          done
+          
+          # Verify both ConfigMaps exist
+          echo "=== All ConfigMaps ==="
+          kubectl get configmap
+          
+          if ! kubectl get configmap backend-config &>/dev/null; then
+            echo "ERROR: ConfigMap backend-config was not created by ESO"
+            echo "Checking ExternalSecret status..."
+            kubectl describe externalsecret backend-config
+            exit 1
+          fi
+
+      - name: Verify both ConfigMaps and Secret are ready
+        run: |
+          echo "=== Checking all required resources ==="
+          
+          # Check static ConfigMap
+          if kubectl get configmap backend-configs &>/dev/null; then
+            echo "✓ backend-configs (static) exists"
+          else
+            echo "⚠️ backend-configs not found - creating from .env"
+            # Create from .env file if it exists in your repo
+            if [ -f .env ]; then
+              kubectl create configmap backend-configs --from-env-file=.env --dry-run=client -o yaml | kubectl apply -f -
+            fi
+          fi
+          
+          # Check ESO ConfigMap
+          if kubectl get configmap backend-config &>/dev/null; then
+            echo "✓ backend-config (ESO/SSM) exists"
+          else
+            echo "❌ backend-config not found!"
+            exit 1
+          fi
+          
+          # Check Secret
+          if kubectl get secret backend-env &>/dev/null; then
+            echo "✓ backend-env (ESO/SecretsManager) exists"
+          else
+            echo "❌ backend-env not found!"
+            exit 1
+          fi
+          
+          echo "All resources ready!"
+
       - name: Update Kubernetes deployment image
         env:
           ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
