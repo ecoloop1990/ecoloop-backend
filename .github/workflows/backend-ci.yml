@@ -285,6 +285,31 @@ jobs:
           
           echo "All resources ready!"
 
+      - name: Clean up old failing pods
+        run: |
+          echo "Cleaning up old pods that may have cached errors..."
+          # Delete old pods that reference the old configmap
+          kubectl delete pod -l app=ecoloop-backend --field-selector=status.phase=Failed --ignore-not-found=true
+          kubectl delete pod -l app=ecoloop-backend --field-selector=status.phase=Pending --ignore-not-found=true
+          
+          # Specifically delete the old problematic pods
+          kubectl delete pod ecoloop-backend-6fcdb885f-g8ttl --ignore-not-found=true
+          kubectl delete pod ecoloop-backend-6b644b466c-c5brf --ignore-not-found=true
+          
+          echo "Waiting for cleanup..."
+          sleep 10
+
+      - name: Check application logs before update
+        run: |
+          echo "=== Checking logs from current pods (if any) ==="
+          NEW_POD=$(kubectl get pods -l app=ecoloop-backend --sort-by=.metadata.creationTimestamp -o name 2>/dev/null | tail -1)
+          if [ -n "$NEW_POD" ]; then
+            echo "Pod: $NEW_POD"
+            echo ""
+            echo "=== Current logs ==="
+            kubectl logs $NEW_POD --tail=50 2>/dev/null || echo "No logs available"
+          fi
+
       - name: Update Kubernetes deployment image
         env:
           ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
@@ -301,9 +326,17 @@ jobs:
           kubectl rollout status deployment/ecoloop-backend --timeout=5m || {
             echo "Rollout failed. Checking pod status..."
             kubectl get pods -l app=ecoloop-backend
-            kubectl describe pods -l app=ecoloop-backend | grep -A 10 "Events:"
+            echo ""
+            echo "=== Pod logs ==="
+            NEW_POD=$(kubectl get pods -l app=ecoloop-backend --sort-by=.metadata.creationTimestamp -o name | tail -1)
+            kubectl logs $NEW_POD --tail=100 2>/dev/null || echo "No logs available"
+            echo ""
+            echo "=== Pod events ==="
+            kubectl describe pods -l app=ecoloop-backend | grep -A 20 "Events:"
             exit 1
           }
+          
+          echo "Deployment successful!"
 
       - name: Debug ConfigMap and Secret
         run: |
@@ -311,7 +344,7 @@ jobs:
           kubectl get configmap
           
           echo "=== Check backend-config specifically ==="
-          kubectl get configmap backend-config -o yaml || echo "ConfigMap not found"
+          kubectl get secret backend-config -o yaml || echo "ConfigMap not found"
           
           echo "=== Check all Secrets in default namespace ==="
           kubectl get secret
