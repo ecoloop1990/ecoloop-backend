@@ -31,8 +31,8 @@ spec:
         # Order: config first, then secrets — JWT_SECRET / DATABASE_URL override if keys ever overlap
         - configMapRef:
             name: backend-configs 
-        - configMapRef:
-            name: backend-config
+         - secretRef:
+            name: backend-config 
         - secretRef:
             name: backend-env
         livenessProbe:
