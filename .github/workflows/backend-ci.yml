@@ -268,7 +268,7 @@ jobs:
           fi
           
           # Check ESO ConfigMap
-          if kubectl get configmap backend-config &>/dev/null; then
+          if kubectl get secret backend-config &>/dev/null; then
             echo "✓ backend-config (ESO/SSM) exists"
           else
             echo "❌ backend-config not found!"
