@@ -188,6 +188,29 @@ jobs:
       - name: Apply Kubernetes manifests
         run: kubectl apply -f kubernetes/
 
+      - name: Fix backend-config type (ConfigMap → Secret)
+        run: |
+          # Delete the old ConfigMap
+          kubectl delete configmap backend-config --ignore-not-found=true
+          
+          # Delete the ExternalSecret to force recreation
+          kubectl delete externalsecret backend-config --ignore-not-found=true
+          
+          # Reapply the ExternalSecret
+          kubectl apply -f kubernetes/externalsecret-backend-config.yaml
+          
+          # Wait for the Secret to be created
+          echo "Waiting for Secret to be created..."
+          for i in {1..30}; do
+            if kubectl get secret backend-config &>/dev/null; then
+              echo "✓ Secret backend-config created"
+              break
+            fi
+            sleep 2
+          done
+          
+          kubectl get secret backend-config
+
       - name: Wait for ClusterSecretStores to be ready
         run: |
           echo "Waiting for ClusterSecretStores to become ready..."
