@@ -32,7 +32,7 @@ export class AIService {
 
       const response = await axios.post<AIResponse>(this.aiUrl, form, {
         headers: form.getHeaders(),
-        timeout: 10000,
+        timeout: 30000,
       });
 
       return response.data;
